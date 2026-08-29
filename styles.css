@@ -97,6 +97,46 @@ body {
   letter-spacing: 0.05em;
 }
 
+/* —— Table error —— */
+.table-error[hidden] {
+  display: none;
+}
+
+.table-error {
+  position: fixed;
+  inset: 0;
+  z-index: 90;
+  display: grid;
+  place-items: center;
+  padding: 2rem;
+  text-align: center;
+  background: linear-gradient(165deg, #355844, var(--green-deep));
+}
+
+.table-error__inner {
+  max-width: 22rem;
+}
+
+.table-error__icon {
+  margin: 0 0 0.75rem;
+  font-size: 2rem;
+  color: var(--green-glow);
+}
+
+.table-error__title {
+  margin: 0 0 0.5rem;
+  font-family: var(--font-display);
+  font-size: 1.75rem;
+  font-weight: 600;
+  color: var(--cream);
+}
+
+.table-error__text {
+  margin: 0;
+  font-size: 0.95rem;
+  color: var(--ink-dim);
+}
+
 /* —— Page —— */
 .page {
   position: relative;
