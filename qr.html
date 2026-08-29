@@ -1,0 +1,30 @@
+<!DOCTYPE html>
+<html lang="tr">
+  <head>
+    <meta charset="UTF-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <title>Book n Tea — Masa QR Kodları</title>
+    <link rel="preconnect" href="https://fonts.googleapis.com" />
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin />
+    <link
+      href="https://fonts.googleapis.com/css2?family=Cormorant+Garamond:ital,wght@0,500;0,600;1,500&family=Outfit:wght@300;400;500;600&display=swap"
+      rel="stylesheet"
+    />
+    <link rel="stylesheet" href="qr.css" />
+  </head>
+  <body>
+    <div class="qr-page">
+      <header class="qr-header">
+        <p class="qr-header__eyebrow">Book n Tea</p>
+        <h1 class="qr-header__title">Masa QR Kodları</h1>
+        <p class="qr-header__hint">
+          Yazdırmak için Ctrl/Cmd + P kullanın — her masa kendi sayfasına basılır.
+        </p>
+        <a class="qr-header__back" href="staff.html">← Kafe paneline dön</a>
+      </header>
+      <main class="qr-grid" id="qrGrid"></main>
+    </div>
+    <script src="vendor/qrcode.js"></script>
+    <script src="qr.js"></script>
+  </body>
+</html>

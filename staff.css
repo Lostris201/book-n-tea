@@ -76,6 +76,20 @@ body {
   color: var(--ink-dim);
 }
 
+.staff-header__qr-link {
+  padding: 0.4rem 0.8rem;
+  border: 1px solid var(--line);
+  color: var(--cream-muted);
+  font-size: 0.82rem;
+  text-decoration: none;
+  transition: background 0.2s var(--ease), color 0.2s var(--ease);
+}
+
+.staff-header__qr-link:hover {
+  background: rgba(107, 74, 50, 0.4);
+  color: var(--ink);
+}
+
 .pulse {
   width: 0.55rem;
   height: 0.55rem;
