@@ -16,14 +16,16 @@ soundToggle.addEventListener("click", () => {
   try {
     audioCtx = new (window.AudioContext || window.webkitAudioContext)();
     soundEnabled = true;
+    soundToggle.classList.add("is-enabled");
   } catch {
     soundEnabled = false;
   }
-  soundToggle.classList.add("is-enabled");
 });
 
 function playAlertTone() {
   if (!soundEnabled || !audioCtx) return;
+
+  audioCtx.resume();
 
   [880, 1046.5].forEach((freq, i) => {
     const oscillator = audioCtx.createOscillator();
@@ -80,7 +82,7 @@ async function fetchOrders() {
         playAlertTone();
         newIds.forEach((id) => flashUntil.set(id, Date.now() + FLASH_DURATION_MS));
       }
-      seenOrderIds = currentIds;
+      newIds.forEach((id) => seenOrderIds.add(id));
     }
 
     render();

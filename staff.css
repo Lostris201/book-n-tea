@@ -310,6 +310,10 @@ body {
     animation-iteration-count: 1 !important;
     transition-duration: 0.01ms !important;
   }
+
+  .order.is-flash {
+    box-shadow: 0 0 0 3px rgba(196, 165, 116, 0.9);
+  }
 }
 
 .order.is-flash {
