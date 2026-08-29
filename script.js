@@ -12,16 +12,22 @@ const orderNote = document.getElementById("orderNote");
 const submitOrder = document.getElementById("submitOrder");
 const toast = document.getElementById("toast");
 
+const tableError = document.getElementById("tableError");
+
 const params = new URLSearchParams(window.location.search);
 const fromUrl = params.get("masa") || params.get("table");
-const tableNumber = fromUrl && /^\d+$/.test(fromUrl) ? fromUrl : "1";
+const tableNumber = fromUrl && /^\d+$/.test(fromUrl) ? fromUrl : null;
 
 let toastTimer = null;
 
 window.addEventListener("load", () => {
   setTimeout(() => {
     loader.classList.add("is-done");
-    page.classList.remove("is-hidden");
+    if (tableNumber) {
+      page.classList.remove("is-hidden");
+    } else {
+      tableError.hidden = false;
+    }
   }, 1400);
 });
 

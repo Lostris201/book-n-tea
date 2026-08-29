@@ -2,9 +2,48 @@ const board = document.getElementById("board");
 const emptyState = document.getElementById("emptyState");
 const orderCount = document.getElementById("orderCount");
 const filters = document.querySelectorAll(".filter");
+const soundToggle = document.getElementById("soundToggle");
 
 let currentFilter = "all";
 let orders = [];
+let soundEnabled = false;
+let audioCtx = null;
+let seenOrderIds = null; // null until the first fetch has been processed
+const FLASH_DURATION_MS = 5400;
+const flashUntil = new Map(); // orderId -> timestamp when the flash should stop
+
+soundToggle.addEventListener("click", () => {
+  try {
+    audioCtx = new (window.AudioContext || window.webkitAudioContext)();
+    soundEnabled = true;
+    soundToggle.classList.add("is-enabled");
+  } catch {
+    soundEnabled = false;
+  }
+});
+
+function playAlertTone() {
+  if (!soundEnabled || !audioCtx) return;
+
+  audioCtx.resume();
+
+  [880, 1046.5].forEach((freq, i) => {
+    const oscillator = audioCtx.createOscillator();
+    const gain = audioCtx.createGain();
+    oscillator.type = "sine";
+    oscillator.frequency.value = freq;
+    gain.gain.setValueAtTime(0.0001, audioCtx.currentTime);
+    gain.gain.exponentialRampToValueAtTime(0.2, audioCtx.currentTime + 0.02);
+    gain.gain.exponentialRampToValueAtTime(
+      0.0001,
+      audioCtx.currentTime + 0.25
+    );
+    oscillator.connect(gain).connect(audioCtx.destination);
+    const start = audioCtx.currentTime + i * 0.18;
+    oscillator.start(start);
+    oscillator.stop(start + 0.25);
+  });
+}
 
 const STATUS_LABEL = {
   new: "Yeni",
@@ -32,6 +71,20 @@ async function fetchOrders() {
     const res = await fetch("/api/orders");
     if (!res.ok) throw new Error("okunamadı");
     orders = await res.json();
+
+    const currentIds = new Set(orders.map((o) => o.id));
+
+    if (seenOrderIds === null) {
+      seenOrderIds = currentIds;
+    } else {
+      const newIds = [...currentIds].filter((id) => !seenOrderIds.has(id));
+      if (newIds.length) {
+        playAlertTone();
+        newIds.forEach((id) => flashUntil.set(id, Date.now() + FLASH_DURATION_MS));
+      }
+      newIds.forEach((id) => seenOrderIds.add(id));
+    }
+
     render();
   } catch {
     emptyState.textContent = "Sunucuya bağlanılamadı.";
@@ -100,6 +153,15 @@ function render() {
         }
       </div>
     `;
+
+    const flashExpiry = flashUntil.get(order.id);
+    if (flashExpiry) {
+      if (flashExpiry > Date.now()) {
+        card.classList.add("is-flash");
+      } else {
+        flashUntil.delete(order.id);
+      }
+    }
 
     board.appendChild(card);
   });

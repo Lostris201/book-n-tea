@@ -1,0 +1,153 @@
+:root {
+  --green-deep: #243d32;
+  --cream: #f2ebe0;
+  --cream-muted: #d6ccbc;
+  --ink: #f7f2ea;
+  --ink-dim: rgba(247, 242, 234, 0.7);
+  --line: rgba(196, 160, 122, 0.28);
+  --brown-warm: #9a6f48;
+  --font-display: "Cormorant Garamond", Georgia, serif;
+  --font-body: "Outfit", system-ui, sans-serif;
+  --ease: cubic-bezier(0.22, 1, 0.36, 1);
+}
+
+*,
+*::before,
+*::after {
+  box-sizing: border-box;
+}
+
+body {
+  margin: 0;
+  min-height: 100dvh;
+  font-family: var(--font-body);
+  font-weight: 300;
+  color: var(--ink);
+  background: var(--green-deep);
+  -webkit-font-smoothing: antialiased;
+}
+
+.qr-page {
+  max-width: 72rem;
+  margin: 0 auto;
+  padding: 1.5rem 1.25rem 3rem;
+}
+
+.qr-header {
+  margin-bottom: 1.5rem;
+  padding-bottom: 1rem;
+  border-bottom: 1px solid var(--line);
+}
+
+.qr-header__eyebrow {
+  margin: 0 0 0.25rem;
+  font-size: 0.8rem;
+  letter-spacing: 0.12em;
+  text-transform: uppercase;
+  color: var(--brown-warm);
+}
+
+.qr-header__title {
+  margin: 0 0 0.5rem;
+  font-family: var(--font-display);
+  font-size: clamp(2rem, 5vw, 2.75rem);
+  font-weight: 600;
+  color: var(--cream);
+}
+
+.qr-header__hint {
+  margin: 0 0 0.5rem;
+  font-size: 0.9rem;
+  color: var(--ink-dim);
+}
+
+.qr-header__back {
+  font-size: 0.85rem;
+  color: var(--cream-muted);
+}
+
+.qr-grid {
+  display: grid;
+  grid-template-columns: repeat(auto-fill, minmax(14rem, 1fr));
+  gap: 1.25rem;
+}
+
+.qr-card {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  gap: 0.5rem;
+  padding: 1.25rem;
+  background: rgba(0, 0, 0, 0.18);
+  border: 1px solid var(--line);
+  text-align: center;
+}
+
+.qr-card__number {
+  margin: 0;
+  font-family: var(--font-display);
+  font-size: 1.5rem;
+  font-weight: 600;
+  color: var(--cream);
+}
+
+.qr-card__code {
+  background: #fff;
+  padding: 0.5rem;
+  line-height: 0;
+}
+
+.qr-card__code svg {
+  display: block;
+  width: 10rem;
+  height: 10rem;
+}
+
+.qr-card__url {
+  margin: 0;
+  font-size: 0.7rem;
+  color: var(--ink-dim);
+  word-break: break-all;
+}
+
+@media print {
+  body {
+    background: #fff;
+    color: #000;
+  }
+
+  .qr-header__back {
+    display: none;
+  }
+
+  .qr-grid {
+    display: block;
+  }
+
+  .qr-card {
+    page-break-after: always;
+    border: none;
+    padding: 2rem 0;
+  }
+
+  .qr-card:last-child {
+    page-break-after: auto;
+  }
+
+  .qr-header__title {
+    color: #000;
+  }
+
+  .qr-header__hint {
+    color: #333;
+  }
+
+  .qr-card__number {
+    color: #000;
+    font-size: 2rem;
+  }
+
+  .qr-card__url {
+    color: #333;
+  }
+}
