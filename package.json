@@ -5,9 +5,10 @@
   "description": "Book n Tea QR menü ve sipariş sistemi",
   "scripts": {
     "start": "node server.js",
-    "dev": "node server.js"
+    "dev": "node --env-file=.env server.js"
   },
   "dependencies": {
+    "@supabase/supabase-js": "^2.114.0",
     "express": "^4.21.2"
   }
 }

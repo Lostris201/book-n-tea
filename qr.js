@@ -1,9 +1,11 @@
 const TABLE_COUNT = 20;
 const grid = document.getElementById("qrGrid");
 
-for (let table = 1; table <= TABLE_COUNT; table += 1) {
-  grid.appendChild(buildCard(table));
-}
+ensureStaffAuth().then(() => {
+  for (let table = 1; table <= TABLE_COUNT; table += 1) {
+    grid.appendChild(buildCard(table));
+  }
+});
 
 function buildCard(table) {
   const url = `${window.location.origin}/index.html?masa=${table}`;

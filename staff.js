@@ -68,7 +68,11 @@ filters.forEach((btn) => {
 
 async function fetchOrders() {
   try {
-    const res = await fetch("/api/orders");
+    let res = await fetch("/api/orders");
+    if (res.status === 401) {
+      await showStaffLoginGate();
+      res = await fetch("/api/orders");
+    }
     if (!res.ok) throw new Error("okunamadı");
     orders = await res.json();
 
@@ -179,11 +183,19 @@ board.addEventListener("click", async (e) => {
   btn.disabled = true;
 
   try {
-    const res = await fetch(`/api/orders/${id}`, {
+    let res = await fetch(`/api/orders/${id}`, {
       method: "PATCH",
       headers: { "Content-Type": "application/json" },
       body: JSON.stringify({ status }),
     });
+    if (res.status === 401) {
+      await showStaffLoginGate();
+      res = await fetch(`/api/orders/${id}`, {
+        method: "PATCH",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({ status }),
+      });
+    }
     if (!res.ok) throw new Error("güncellenemedi");
     await fetchOrders();
   } catch {
