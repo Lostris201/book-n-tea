@@ -3,14 +3,18 @@ const emptyState = document.getElementById("emptyState");
 const orderCount = document.getElementById("orderCount");
 const filters = document.querySelectorAll(".filter");
 const soundToggle = document.getElementById("soundToggle");
+const callsStrip = document.getElementById("callsStrip");
 
 let currentFilter = "all";
 let orders = [];
+let requests = [];
 let soundEnabled = false;
 let audioCtx = null;
 let seenOrderIds = null; // null until the first fetch has been processed
+let seenRequestIds = null; // same idea, for waiter/bill requests
 const FLASH_DURATION_MS = 5400;
-const flashUntil = new Map(); // orderId -> timestamp when the flash should stop
+// ord_* and req_* ids never collide, so orders and requests share one map.
+const flashUntil = new Map(); // id -> timestamp when the flash should stop
 
 soundToggle.addEventListener("click", () => {
   try {
@@ -95,6 +99,99 @@ async function fetchOrders() {
     emptyState.hidden = false;
   }
 }
+
+const REQUEST_TYPE_LABEL = {
+  waiter: "Garson",
+  bill: "Hesap",
+};
+
+async function fetchRequests() {
+  try {
+    let res = await fetch("/api/requests");
+    if (res.status === 401) {
+      await showStaffLoginGate();
+      res = await fetch("/api/requests");
+    }
+    if (!res.ok) throw new Error("okunamadı");
+    requests = await res.json();
+
+    const currentIds = new Set(requests.map((r) => r.id));
+
+    if (seenRequestIds === null) {
+      seenRequestIds = currentIds;
+    } else {
+      const newIds = [...currentIds].filter((id) => !seenRequestIds.has(id));
+      if (newIds.length) {
+        playAlertTone();
+        newIds.forEach((id) => flashUntil.set(id, Date.now() + FLASH_DURATION_MS));
+      }
+      newIds.forEach((id) => seenRequestIds.add(id));
+    }
+
+    renderRequests();
+  } catch {
+    // Order polling already surfaces a connection error; stay quiet here.
+  }
+}
+
+function renderRequests() {
+  callsStrip.innerHTML = "";
+
+  requests.forEach((request) => {
+    const chip = document.createElement("div");
+    chip.className = "call-chip";
+    chip.dataset.id = request.id;
+
+    const flashExpiry = flashUntil.get(request.id);
+    if (flashExpiry) {
+      if (flashExpiry > Date.now()) {
+        chip.classList.add("is-flash");
+      } else {
+        flashUntil.delete(request.id);
+      }
+    }
+
+    const typeLabel = escapeHtml(REQUEST_TYPE_LABEL[request.type] || request.type);
+
+    chip.innerHTML = `
+      <span class="call-chip__label">Masa ${escapeHtml(request.table)} — ${typeLabel}</span>
+      <button type="button" class="call-chip__done">Tamam</button>
+    `;
+
+    callsStrip.appendChild(chip);
+  });
+}
+
+callsStrip.addEventListener("click", async (e) => {
+  const btn = e.target.closest(".call-chip__done");
+  if (!btn) return;
+
+  const chip = btn.closest(".call-chip");
+  const id = chip?.dataset.id;
+  if (!id) return;
+
+  btn.disabled = true;
+
+  try {
+    let res = await fetch(`/api/requests/${id}`, {
+      method: "PATCH",
+      headers: { "Content-Type": "application/json" },
+      body: JSON.stringify({ status: "done" }),
+    });
+    if (res.status === 401) {
+      await showStaffLoginGate();
+      res = await fetch(`/api/requests/${id}`, {
+        method: "PATCH",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({ status: "done" }),
+      });
+    }
+    if (!res.ok) throw new Error("güncellenemedi");
+    await fetchRequests();
+  } catch {
+    btn.disabled = false;
+  }
+});
 
 function render() {
   const visible =
@@ -223,4 +320,6 @@ function escapeHtml(str) {
 }
 
 fetchOrders();
+fetchRequests();
 setInterval(fetchOrders, 2000);
+setInterval(fetchRequests, 2000);

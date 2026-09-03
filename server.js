@@ -164,6 +164,93 @@ app.patch("/api/orders/:id", requireStaffAuth, async (req, res) => {
   res.json(toClientOrder(data));
 });
 
+app.get("/api/requests", requireStaffAuth, async (req, res) => {
+  const status = req.query.status;
+
+  let query = supabase.from("requests").select("*").order("created_at", { ascending: true });
+  query = status ? query.eq("status", status) : query.neq("status", "done");
+
+  const { data, error } = await query;
+  if (error) {
+    return res.status(500).json({ error: "Talepler alınamadı." });
+  }
+
+  res.json(data.map(toClientRequest));
+});
+
+app.post("/api/requests", async (req, res) => {
+  const { table, type } = req.body || {};
+  const tableNumber = Number.parseInt(String(table ?? "").trim(), 10);
+  const allowedTypes = ["waiter", "bill"];
+
+  if (!Number.isInteger(tableNumber) || tableNumber <= 0 || !allowedTypes.includes(type)) {
+    return res.status(400).json({ error: "Masa ve talep türü gerekli." });
+  }
+
+  const row = {
+    id: `req_${Date.now()}_${Math.random().toString(36).slice(2, 7)}`,
+    table_number: tableNumber,
+    type,
+    status: "open",
+  };
+
+  const { data, error } = await supabase.from("requests").insert(row).select().single();
+
+  if (error) {
+    // Unique violation: an open request of this type already exists for
+    // this table (client cooldown was bypassed, e.g. by a page refresh).
+    // Return that existing request instead of erroring.
+    if (error.code === "23505") {
+      const { data: existing, error: fetchError } = await supabase
+        .from("requests")
+        .select("*")
+        .eq("table_number", tableNumber)
+        .eq("type", type)
+        .eq("status", "open")
+        .single();
+
+      if (!fetchError && existing) {
+        return res.status(200).json(toClientRequest(existing));
+      }
+    }
+    return res.status(500).json({ error: "Talep kaydedilemedi." });
+  }
+
+  res.status(201).json(toClientRequest(data));
+});
+
+app.patch("/api/requests/:id", requireStaffAuth, async (req, res) => {
+  const { status } = req.body || {};
+  const allowed = ["open", "done"];
+
+  if (!allowed.includes(status)) {
+    return res.status(400).json({ error: "Geçersiz durum." });
+  }
+
+  const { data, error } = await supabase
+    .from("requests")
+    .update({ status, updated_at: new Date().toISOString() })
+    .eq("id", req.params.id)
+    .select()
+    .single();
+
+  if (error || !data) {
+    return res.status(404).json({ error: "Talep bulunamadı." });
+  }
+
+  res.json(toClientRequest(data));
+});
+
+function toClientRequest(row) {
+  return {
+    id: row.id,
+    table: String(row.table_number),
+    type: row.type,
+    status: row.status,
+    createdAt: row.created_at,
+  };
+}
+
 // Supabase rows -> the shape script.js/staff.js already expect.
 function toClientOrder(row) {
   return {

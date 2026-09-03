@@ -245,6 +245,44 @@ body {
   color: var(--ink-dim);
 }
 
+/* —— Service calls —— */
+.calls {
+  display: flex;
+  gap: 0.5rem;
+  margin-bottom: 0.85rem;
+  animation: rise 0.85s var(--ease) 0.08s both;
+}
+
+.calls__btn {
+  flex: 1;
+  padding: 0.55rem 0.6rem;
+  border: 1px solid var(--line);
+  border-radius: 999px;
+  background: var(--surface);
+  color: var(--cream-muted);
+  font-family: var(--font-body);
+  font-size: 0.78rem;
+  font-weight: 500;
+  letter-spacing: 0.02em;
+  cursor: pointer;
+  transition: background 0.2s var(--ease), color 0.2s var(--ease), opacity 0.2s var(--ease);
+}
+
+.calls__btn:hover:not(:disabled) {
+  background: rgba(154, 111, 72, 0.32);
+  color: var(--cream);
+}
+
+.calls__btn:focus-visible {
+  outline: 1px solid var(--brown-soft);
+  outline-offset: 2px;
+}
+
+.calls__btn:disabled {
+  opacity: 0.5;
+  cursor: not-allowed;
+}
+
 /* —— Categories —— */
 .categories {
   display: flex;
