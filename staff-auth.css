@@ -1,0 +1,81 @@
+/* Shared staff login gate overlay — used by staff.html and qr.html. */
+
+.staff-auth-gate {
+  position: fixed;
+  inset: 0;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  padding: 1.25rem;
+  background: rgba(15, 26, 20, 0.82);
+  backdrop-filter: blur(3px);
+  z-index: 100;
+}
+
+.staff-auth-gate__card {
+  display: flex;
+  flex-direction: column;
+  gap: 0.6rem;
+  width: 100%;
+  max-width: 20rem;
+  padding: 1.75rem 1.5rem;
+  background: var(--green-deep, #243d32);
+  border: 1px solid var(--line, rgba(196, 160, 122, 0.28));
+}
+
+.staff-auth-gate__eyebrow {
+  margin: 0;
+  font-size: 0.78rem;
+  letter-spacing: 0.12em;
+  text-transform: uppercase;
+  color: var(--brown-warm, #9a6f48);
+}
+
+.staff-auth-gate__title {
+  margin: 0 0 0.5rem;
+  font-family: var(--font-display, serif);
+  font-size: 1.7rem;
+  font-weight: 600;
+  color: var(--cream, #f2ebe0);
+}
+
+.staff-auth-gate__label {
+  font-size: 0.82rem;
+  color: var(--ink-dim, rgba(247, 242, 234, 0.7));
+}
+
+.staff-auth-gate__input {
+  padding: 0.6rem 0.7rem;
+  border: 1px solid var(--line, rgba(196, 160, 122, 0.28));
+  background: rgba(0, 0, 0, 0.2);
+  color: var(--ink, #f7f2ea);
+  font-family: var(--font-body, sans-serif);
+  font-size: 0.95rem;
+}
+
+.staff-auth-gate__input:focus {
+  outline: 2px solid var(--brown-warm, #9a6f48);
+  outline-offset: 1px;
+}
+
+.staff-auth-gate__error {
+  margin: 0;
+  font-size: 0.8rem;
+  color: #e2a2a2;
+}
+
+.staff-auth-gate__submit {
+  margin-top: 0.4rem;
+  padding: 0.65rem 0.9rem;
+  border: 1px solid var(--brown-warm, #9a6f48);
+  background: var(--brown, #7a5638);
+  color: var(--ink, #f7f2ea);
+  font-family: var(--font-body, sans-serif);
+  font-size: 0.9rem;
+  cursor: pointer;
+  transition: background 0.2s var(--ease, ease);
+}
+
+.staff-auth-gate__submit:hover {
+  background: var(--brown-warm, #9a6f48);
+}

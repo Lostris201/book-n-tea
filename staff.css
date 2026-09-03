@@ -122,6 +122,61 @@ body {
   display: none;
 }
 
+.calls-strip {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 0.5rem;
+  margin-bottom: 1.25rem;
+}
+
+.calls-strip:empty {
+  display: none;
+}
+
+.call-chip {
+  display: flex;
+  align-items: center;
+  gap: 0.6rem;
+  padding: 0.5rem 0.55rem 0.5rem 0.85rem;
+  background: rgba(196, 165, 116, 0.16);
+  border: 1px solid var(--brown-warm);
+  border-radius: 999px;
+  animation: rise 0.4s var(--ease) both;
+}
+
+.call-chip__label {
+  font-size: 0.85rem;
+  color: var(--cream);
+  white-space: nowrap;
+}
+
+.call-chip__done {
+  padding: 0.3rem 0.7rem;
+  border: 1px solid var(--line);
+  border-radius: 999px;
+  background: transparent;
+  color: var(--ink);
+  font-family: var(--font-body);
+  font-size: 0.72rem;
+  cursor: pointer;
+  transition: background 0.2s var(--ease);
+}
+
+.call-chip__done:hover {
+  background: rgba(139, 99, 67, 0.4);
+}
+
+.call-chip.is-flash {
+  animation: order-flash 1.8s ease-out 3;
+}
+
+@media (prefers-reduced-motion: reduce) {
+  .call-chip.is-flash {
+    animation: none;
+    box-shadow: 0 0 0 3px rgba(196, 165, 116, 0.9);
+  }
+}
+
 .filters {
   display: flex;
   flex-wrap: wrap;

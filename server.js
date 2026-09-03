@@ -1,37 +1,116 @@
 const express = require("express");
-const fs = require("fs");
-const path = require("path");
+const crypto = require("crypto");
+const { createClient } = require("@supabase/supabase-js");
 
 const app = express();
 const PORT = process.env.PORT || 3000;
-let ordersMemory = [];
 
-function readOrders() {
-  return ordersMemory;
+const supabase = createClient(
+  process.env.SUPABASE_URL,
+  process.env.SUPABASE_SERVICE_KEY
+);
+
+const STAFF_COOKIE = "staff_auth";
+const STAFF_SESSION_MS = 12 * 60 * 60 * 1000; // 12 hours — roughly one shift
+
+function signStaffToken(expiresAt) {
+  const hmac = crypto
+    .createHmac("sha256", process.env.STAFF_AUTH_SECRET)
+    .update(String(expiresAt))
+    .digest("hex");
+  return `${expiresAt}.${hmac}`;
 }
 
-function writeOrders(orders) {
-  ordersMemory = orders;
+function verifyStaffToken(token) {
+  if (!token) return false;
+  const [expiresAtRaw, hmac] = token.split(".");
+  const expiresAt = Number(expiresAtRaw);
+  if (!expiresAt || !hmac || Date.now() > expiresAt) return false;
+
+  const expected = crypto
+    .createHmac("sha256", process.env.STAFF_AUTH_SECRET)
+    .update(String(expiresAt))
+    .digest("hex");
+
+  const a = Buffer.from(hmac);
+  const b = Buffer.from(expected);
+  return a.length === b.length && crypto.timingSafeEqual(a, b);
+}
+
+function safeEquals(a, b) {
+  const bufA = crypto.createHash("sha256").update(String(a)).digest();
+  const bufB = crypto.createHash("sha256").update(String(b)).digest();
+  return crypto.timingSafeEqual(bufA, bufB);
+}
+
+function getCookie(req, name) {
+  const header = req.headers.cookie;
+  if (!header) return null;
+  const match = header
+    .split(";")
+    .map((part) => part.trim())
+    .find((part) => part.startsWith(`${name}=`));
+  return match ? decodeURIComponent(match.slice(name.length + 1)) : null;
+}
+
+function requireStaffAuth(req, res, next) {
+  const token = getCookie(req, STAFF_COOKIE);
+  if (!verifyStaffToken(token)) {
+    return res.status(401).json({ error: "Giriş gerekli." });
+  }
+  next();
 }
 
 app.use(express.json());
 
-app.get("/api/orders", (req, res) => {
-  const status = req.query.status;
-  let orders = readOrders();
-  if (status) {
-    orders = orders.filter((o) => o.status === status);
-  } else {
-    orders = orders.filter((o) => o.status !== "done");
-  }
-  orders.sort((a, b) => new Date(a.createdAt) - new Date(b.createdAt));
-  res.json(orders);
+app.get("/api/staff/session", requireStaffAuth, (req, res) => {
+  res.json({ ok: true });
 });
 
-app.post("/api/orders", (req, res) => {
-  const { table, items, note } = req.body || {};
+app.post("/api/staff/login", (req, res) => {
+  const { password } = req.body || {};
 
-  if (!table || !Array.isArray(items) || items.length === 0) {
+  if (!password || !safeEquals(password, process.env.STAFF_PASSWORD)) {
+    return res.status(401).json({ error: "Şifre hatalı." });
+  }
+
+  const expiresAt = Date.now() + STAFF_SESSION_MS;
+  const token = signStaffToken(expiresAt);
+  const secure = process.env.VERCEL ? "; Secure" : "";
+
+  res.setHeader(
+    "Set-Cookie",
+    `${STAFF_COOKIE}=${encodeURIComponent(token)}; HttpOnly; SameSite=Strict; Path=/; Max-Age=${
+      STAFF_SESSION_MS / 1000
+    }${secure}`
+  );
+  res.json({ ok: true });
+});
+
+app.get("/api/orders", requireStaffAuth, async (req, res) => {
+  const status = req.query.status;
+
+  let query = supabase.from("orders").select("*").order("created_at", { ascending: true });
+  query = status ? query.eq("status", status) : query.neq("status", "done");
+
+  const { data, error } = await query;
+  if (error) {
+    return res.status(500).json({ error: "Siparişler alınamadı." });
+  }
+
+  res.json(data.map(toClientOrder));
+});
+
+app.post("/api/orders", async (req, res) => {
+  const { table, items, note } = req.body || {};
+  const tableNumber = Number.parseInt(String(table ?? "").trim(), 10);
+
+  if (
+    !Number.isInteger(tableNumber) ||
+    tableNumber <= 0 ||
+    !Array.isArray(items) ||
+    items.length === 0
+  ) {
     return res.status(400).json({ error: "Masa ve ürünler gerekli." });
   }
 
@@ -47,23 +126,23 @@ app.post("/api/orders", (req, res) => {
     return res.status(400).json({ error: "Geçerli ürün yok." });
   }
 
-  const order = {
+  const row = {
     id: `ord_${Date.now()}_${Math.random().toString(36).slice(2, 7)}`,
-    table: String(table).trim(),
+    table_number: tableNumber,
     items: cleanItems,
     note: note ? String(note).trim().slice(0, 200) : "",
     status: "new",
-    createdAt: new Date().toISOString(),
   };
 
-  const orders = readOrders();
-  orders.push(order);
-  writeOrders(orders);
+  const { data, error } = await supabase.from("orders").insert(row).select().single();
+  if (error) {
+    return res.status(500).json({ error: "Sipariş kaydedilemedi." });
+  }
 
-  res.status(201).json(order);
+  res.status(201).json(toClientOrder(data));
 });
 
-app.patch("/api/orders/:id", (req, res) => {
+app.patch("/api/orders/:id", requireStaffAuth, async (req, res) => {
   const { status } = req.body || {};
   const allowed = ["new", "preparing", "ready", "done"];
 
@@ -71,17 +150,118 @@ app.patch("/api/orders/:id", (req, res) => {
     return res.status(400).json({ error: "Geçersiz durum." });
   }
 
-  const orders = readOrders();
-  const index = orders.findIndex((o) => o.id === req.params.id);
+  const { data, error } = await supabase
+    .from("orders")
+    .update({ status, updated_at: new Date().toISOString() })
+    .eq("id", req.params.id)
+    .select()
+    .single();
 
-  if (index === -1) {
+  if (error || !data) {
     return res.status(404).json({ error: "Sipariş bulunamadı." });
   }
 
-  orders[index].status = status;
-  writeOrders(orders);
-  res.json(orders[index]);
+  res.json(toClientOrder(data));
 });
+
+app.get("/api/requests", requireStaffAuth, async (req, res) => {
+  const status = req.query.status;
+
+  let query = supabase.from("requests").select("*").order("created_at", { ascending: true });
+  query = status ? query.eq("status", status) : query.neq("status", "done");
+
+  const { data, error } = await query;
+  if (error) {
+    return res.status(500).json({ error: "Talepler alınamadı." });
+  }
+
+  res.json(data.map(toClientRequest));
+});
+
+app.post("/api/requests", async (req, res) => {
+  const { table, type } = req.body || {};
+  const tableNumber = Number.parseInt(String(table ?? "").trim(), 10);
+  const allowedTypes = ["waiter", "bill"];
+
+  if (!Number.isInteger(tableNumber) || tableNumber <= 0 || !allowedTypes.includes(type)) {
+    return res.status(400).json({ error: "Masa ve talep türü gerekli." });
+  }
+
+  const row = {
+    id: `req_${Date.now()}_${Math.random().toString(36).slice(2, 7)}`,
+    table_number: tableNumber,
+    type,
+    status: "open",
+  };
+
+  const { data, error } = await supabase.from("requests").insert(row).select().single();
+
+  if (error) {
+    // Unique violation: an open request of this type already exists for
+    // this table (client cooldown was bypassed, e.g. by a page refresh).
+    // Return that existing request instead of erroring.
+    if (error.code === "23505") {
+      const { data: existing, error: fetchError } = await supabase
+        .from("requests")
+        .select("*")
+        .eq("table_number", tableNumber)
+        .eq("type", type)
+        .eq("status", "open")
+        .single();
+
+      if (!fetchError && existing) {
+        return res.status(200).json(toClientRequest(existing));
+      }
+    }
+    return res.status(500).json({ error: "Talep kaydedilemedi." });
+  }
+
+  res.status(201).json(toClientRequest(data));
+});
+
+app.patch("/api/requests/:id", requireStaffAuth, async (req, res) => {
+  const { status } = req.body || {};
+  const allowed = ["open", "done"];
+
+  if (!allowed.includes(status)) {
+    return res.status(400).json({ error: "Geçersiz durum." });
+  }
+
+  const { data, error } = await supabase
+    .from("requests")
+    .update({ status, updated_at: new Date().toISOString() })
+    .eq("id", req.params.id)
+    .select()
+    .single();
+
+  if (error || !data) {
+    return res.status(404).json({ error: "Talep bulunamadı." });
+  }
+
+  res.json(toClientRequest(data));
+});
+
+function toClientRequest(row) {
+  return {
+    id: row.id,
+    table: String(row.table_number),
+    type: row.type,
+    status: row.status,
+    createdAt: row.created_at,
+  };
+}
+
+// Supabase rows -> the shape script.js/staff.js already expect.
+function toClientOrder(row) {
+  return {
+    id: row.id,
+    table: String(row.table_number),
+    items: row.items,
+    note: row.note,
+    status: row.status,
+    createdAt: row.created_at,
+  };
+}
 
 app.use(express.static(__dirname));
 

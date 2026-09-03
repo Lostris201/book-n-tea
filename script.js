@@ -13,6 +13,8 @@ const submitOrder = document.getElementById("submitOrder");
 const toast = document.getElementById("toast");
 
 const tableError = document.getElementById("tableError");
+const callWaiterBtn = document.getElementById("callWaiterBtn");
+const requestBillBtn = document.getElementById("requestBillBtn");
 
 const params = new URLSearchParams(window.location.search);
 const fromUrl = params.get("masa") || params.get("table");
@@ -182,6 +184,46 @@ submitOrder.addEventListener("click", async () => {
     submitOrder.disabled = false;
   }
 });
+
+const CALL_COOLDOWN_MS = 2 * 60 * 1000; // 2 minutes
+
+const CALL_CONFIG = {
+  waiter: {
+    button: callWaiterBtn,
+    confirmMessage: "Garson bilgilendirildi",
+  },
+  bill: {
+    button: requestBillBtn,
+    confirmMessage: "Hesap talebiniz iletildi",
+  },
+};
+
+async function sendCall(type) {
+  const config = CALL_CONFIG[type];
+  const btn = config.button;
+
+  btn.disabled = true;
+
+  try {
+    const res = await fetch("/api/requests", {
+      method: "POST",
+      headers: { "Content-Type": "application/json" },
+      body: JSON.stringify({ table: tableNumber, type }),
+    });
+    if (!res.ok) throw new Error();
+
+    showToast(config.confirmMessage);
+    setTimeout(() => {
+      btn.disabled = false;
+    }, CALL_COOLDOWN_MS);
+  } catch {
+    showToast("Gönderilemedi, tekrar deneyin");
+    btn.disabled = false;
+  }
+}
+
+callWaiterBtn.addEventListener("click", () => sendCall("waiter"));
+requestBillBtn.addEventListener("click", () => sendCall("bill"));
 
 function showToast(message) {
   toast.textContent = message;

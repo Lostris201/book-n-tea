@@ -245,6 +245,44 @@ body {
   color: var(--ink-dim);
 }
 
+/* —— Service calls —— */
+.calls {
+  display: flex;
+  gap: 0.5rem;
+  margin-bottom: 0.85rem;
+  animation: rise 0.85s var(--ease) 0.08s both;
+}
+
+.calls__btn {
+  flex: 1;
+  padding: 0.55rem 0.6rem;
+  border: 1px solid var(--line);
+  border-radius: 999px;
+  background: var(--surface);
+  color: var(--cream-muted);
+  font-family: var(--font-body);
+  font-size: 0.78rem;
+  font-weight: 500;
+  letter-spacing: 0.02em;
+  cursor: pointer;
+  transition: background 0.2s var(--ease), color 0.2s var(--ease), opacity 0.2s var(--ease);
+}
+
+.calls__btn:hover:not(:disabled) {
+  background: rgba(154, 111, 72, 0.32);
+  color: var(--cream);
+}
+
+.calls__btn:focus-visible {
+  outline: 1px solid var(--brown-soft);
+  outline-offset: 2px;
+}
+
+.calls__btn:disabled {
+  opacity: 0.5;
+  cursor: not-allowed;
+}
+
 /* —— Categories —— */
 .categories {
   display: flex;
@@ -325,12 +363,38 @@ body {
 }
 
 .item {
+  display: flex;
+  gap: 0.85rem;
+  align-items: flex-start;
   padding: 1rem 0.15rem 1.1rem;
   border-bottom: 1px solid var(--line);
 }
 
 .item:last-child {
   border-bottom: none;
+}
+
+.item__thumb {
+  /* Set per-item via inline style, e.g. --thumb: url('images/items/earl-grey.jpg').
+     Layered under a placeholder gradient: a missing/unset image just
+     reveals the gradient underneath instead of a broken-image icon. */
+  --thumb: none;
+  flex: 0 0 auto;
+  width: 3.5rem;
+  height: 3.5rem;
+  border-radius: 0.4rem;
+  border: 1px solid var(--line);
+  background-color: var(--surface);
+  background-image: var(--thumb),
+    radial-gradient(circle at 30% 25%, rgba(196, 160, 122, 0.22), transparent 65%);
+  background-size: cover, cover;
+  background-position: center, center;
+  background-repeat: no-repeat, no-repeat;
+}
+
+.item__body {
+  flex: 1;
+  min-width: 0;
 }
 
 .item__row {
