@@ -363,12 +363,38 @@ body {
 }
 
 .item {
+  display: flex;
+  gap: 0.85rem;
+  align-items: flex-start;
   padding: 1rem 0.15rem 1.1rem;
   border-bottom: 1px solid var(--line);
 }
 
 .item:last-child {
   border-bottom: none;
+}
+
+.item__thumb {
+  /* Set per-item via inline style, e.g. --thumb: url('images/items/earl-grey.jpg').
+     Layered under a placeholder gradient: a missing/unset image just
+     reveals the gradient underneath instead of a broken-image icon. */
+  --thumb: none;
+  flex: 0 0 auto;
+  width: 3.5rem;
+  height: 3.5rem;
+  border-radius: 0.4rem;
+  border: 1px solid var(--line);
+  background-color: var(--surface);
+  background-image: var(--thumb),
+    radial-gradient(circle at 30% 25%, rgba(196, 160, 122, 0.22), transparent 65%);
+  background-size: cover, cover;
+  background-position: center, center;
+  background-repeat: no-repeat, no-repeat;
+}
+
+.item__body {
+  flex: 1;
+  min-width: 0;
 }
 
 .item__row {
