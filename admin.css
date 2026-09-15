@@ -732,8 +732,6 @@ ul, ol {
   padding: 1.5rem;
   box-shadow: var(--shadow-card);
   transition: box-shadow var(--transition-fast);
-  max-width: 700px;
-  margin-left: 20px;
 }
 
 .admin-card:hover {

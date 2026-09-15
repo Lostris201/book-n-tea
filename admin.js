@@ -502,7 +502,7 @@
   window.DataStore = DataStore;
 
   /* ==========================================================================
-     2. AUTHENTICATION CONTROLLER (admin / bookntea2026)
+     2. AUTHENTICATION CONTROLLER (admin / şifre123)
      ========================================================================== */
   const loginScreen = document.getElementById('loginScreen');
   const loginForm = document.getElementById('loginForm');
@@ -527,7 +527,7 @@
       const user = (loginUser.value || '').trim();
       const pass = (loginPass.value || '').trim();
 
-      if (user === 'admin' && pass === 'bookntea2026') {
+      if (user === 'admin' && (pass === 'şifre123' || pass === 'sifre123')) {
         sessionStorage.setItem(AUTH_KEY, 'true');
         loginError.classList.remove('is-visible');
         loginScreen.classList.add('is-hidden');
