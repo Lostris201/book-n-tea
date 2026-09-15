@@ -117,15 +117,22 @@ app.post("/api/orders", (req, res) => {
   if (existingIdx !== -1) {
     // Mevcut siparişe yeni ürünleri ekle
     const existing = orders[existingIdx];
-    cleanItems.forEach((newItem) => {
-      // Aynı isimde ürün varsa miktarını artır
-      const sameIdx = existing.items.findIndex((i) => i.name === newItem.name);
-      if (sameIdx !== -1) {
-        existing.items[sameIdx].qty += newItem.qty;
-      } else {
-        existing.items.push(newItem);
-      }
+
+    // Önceki ürünlerin isNew işaretini kaldır (eski siparişler)
+    existing.items.forEach((item) => {
+      item.isNew = false;
     });
+
+    // Yeni gelen siparişleri isNew: true olarak ayrı ekle ki eski ürünlerle karışmasın
+    cleanItems.forEach((newItem) => {
+      existing.items.push({
+        name: newItem.name,
+        price: newItem.price,
+        qty: newItem.qty,
+        isNew: true,
+      });
+    });
+
     // Not varsa ekle / güncelle
     if (note && String(note).trim()) {
       const newNote = String(note).trim().slice(0, 200);
@@ -133,7 +140,8 @@ app.post("/api/orders", (req, res) => {
         ? `${existing.note} | ${newNote}`
         : newNote;
     }
-    existing.status = "new"; // Yeni ürün geldi bildirimi
+    existing.status = "new"; // Yeni ürün geldiğinde garson/mutfak hazırlasın
+    existing.hasNewItems = true;
     existing.updatedAt = new Date().toISOString();
     writeOrders(orders);
     return res.status(200).json(existing);
@@ -143,7 +151,7 @@ app.post("/api/orders", (req, res) => {
   const order = {
     id: `ord_${Date.now()}_${Math.random().toString(36).slice(2, 7)}`,
     table: tableStr,
-    items: cleanItems,
+    items: cleanItems.map((i) => ({ ...i, isNew: false })),
     note: note ? String(note).trim().slice(0, 200) : "",
     status: "new",
     createdAt: new Date().toISOString(),
@@ -157,7 +165,7 @@ app.post("/api/orders", (req, res) => {
 
 app.patch("/api/orders/:id", (req, res) => {
   const { status } = req.body || {};
-  const allowed = ["new", "preparing", "ready", "done"];
+  const allowed = ["new", "preparing", "ready", "delivered", "done"];
 
   if (!allowed.includes(status)) {
     return res.status(400).json({ error: "Geçersiz durum." });

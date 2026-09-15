@@ -65,12 +65,13 @@ const STATUS_LABEL = {
   new: "Yeni",
   preparing: "Hazırlanıyor",
   ready: "Hazır",
+  delivered: "Teslim Edildi",
 };
 
 const NEXT_ACTION = {
   new: { status: "preparing", label: "Hazırla" },
   preparing: { status: "ready", label: "Hazır" },
-  ready: { status: "done", label: "Teslim" },
+  ready: { status: "delivered", label: "Teslim" },
 };
 
 /* --------------------------------------------------------------------------
@@ -152,8 +153,11 @@ function render() {
     const itemsHtml = order.items
       .map(
         (item) => `
-        <li>
-          <span>${escapeHtml(item.name)}</span>
+        <li class="${item.isNew ? "is-new-item" : ""}">
+          <span>
+            ${escapeHtml(item.name)}
+            ${item.isNew ? `<span class="order-item-badge-new">YENİ</span>` : ""}
+          </span>
           <span class="order__qty">×${item.qty}</span>
         </li>`
       )
@@ -165,7 +169,10 @@ function render() {
 
     card.innerHTML = `
       <div class="order__top">
-        <h2 class="order__table">Masa ${escapeHtml(order.table)}</h2>
+        <h2 class="order__table">
+          Masa ${escapeHtml(order.table)}
+          ${order.hasNewItems ? `<span class="order-badge-has-new">Yeni Sipariş</span>` : ""}
+        </h2>
         <span class="order__time">${time}</span>
       </div>
       <span class="order__status">${STATUS_LABEL[order.status] || order.status}</span>
@@ -177,7 +184,7 @@ function render() {
       </div>
       <div class="order__actions">
         ${next ? `<button type="button" class="is-primary" data-status="${next.status}">${next.label}</button>` : ""}
-        ${order.status !== "done" ? `<button type="button" data-action="close-with-payment">Kapat</button>` : ""}
+        ${order.status !== "done" ? `<button type="button" data-action="close-with-payment" class="${order.status === 'delivered' ? 'is-primary' : ''}">Kapat</button>` : ""}
       </div>
     `;
 

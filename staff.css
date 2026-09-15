@@ -603,3 +603,53 @@ body {
     flex-direction: column;
   }
 }
+/* Delivered Status */
+.order.is-delivered {
+  border-left-color: #A3E635;
+}
+.order.is-delivered .order__status {
+  background: rgba(163, 230, 53, 0.18);
+  color: #BEF264;
+}
+
+/* YENI Item Badge */
+.order-item-badge-new {
+  display: inline-block;
+  background: #E11D48;
+  color: #FFF;
+  font-size: 0.65rem;
+  font-weight: 700;
+  padding: 0.15rem 0.35rem;
+  border-radius: 4px;
+  margin-left: 0.4rem;
+  vertical-align: middle;
+  letter-spacing: 0.05em;
+  animation: pulseNewItem 1.5s infinite;
+}
+
+@keyframes pulseNewItem {
+  0%, 100% { opacity: 1; transform: scale(1); }
+  50% { opacity: 0.85; transform: scale(1.05); }
+}
+
+/* New Batch Header Badge */
+.order-badge-has-new {
+  display: inline-block;
+  background: #E11D48;
+  color: #FFF;
+  font-size: 0.65rem;
+  font-weight: 700;
+  padding: 0.25rem 0.5rem;
+  border-radius: 999px;
+  margin-left: 0.6rem;
+  vertical-align: middle;
+  letter-spacing: 0.04em;
+  text-transform: uppercase;
+}
+
+/* Delivered Filter Button */
+.filter--delivered.is-active {
+  background: #A3E635;
+  border-color: #A3E635;
+  color: var(--bg-dark);
+}
