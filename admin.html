@@ -1,0 +1,877 @@
+<!DOCTYPE html>
+<html lang="tr">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <meta name="description" content="Book & Tea House — Modern ve Lüks Yönetim & Admin Paneli" />
+  <title>Book & Tea House — Yönetim & Admin Paneli</title>
+
+  <!-- Google Fonts: Cormorant Garamond (Headings) & Inter (UI) -->
+  <link rel="preconnect" href="https://fonts.googleapis.com" />
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin />
+  <link href="https://fonts.googleapis.com/css2?family=Cormorant+Garamond:ital,wght@0,500;0,600;0,700;1,500;1,600&family=Inter:wght@300;400;500;600;700&display=swap" rel="stylesheet" />
+
+  <!-- Admin Panel Styles -->
+  <link rel="stylesheet" href="admin.css" />
+</head>
+<body>
+
+  <!-- ==========================================================================
+       1. LOGIN SCREEN OVERLAY (admin / bookntea2026)
+       ========================================================================== -->
+  <div class="login-screen" id="loginScreen">
+    <div class="login-card">
+      <div class="login-brand">
+        <div class="login-crest">☕</div>
+        <h1 class="login-title">Book & Tea House</h1>
+        <p class="login-subtitle">Kafe Yönetim & Admin Paneli</p>
+      </div>
+
+      <div class="login-error" id="loginError" role="alert">
+        <span>⚠️</span>
+        <span id="loginErrorText">Kullanıcı adı veya şifre hatalı. Lütfen tekrar deneyin.</span>
+      </div>
+
+      <form class="login-form" id="loginForm" onsubmit="return false;">
+        <div class="form-field">
+          <label class="form-label" for="loginUser">Kullanıcı Adı</label>
+          <div class="form-input-wrap">
+            <span class="form-input-icon">👤</span>
+            <input class="form-input" type="text" id="loginUser" placeholder="admin" autocomplete="username" required />
+          </div>
+        </div>
+
+        <div class="form-field">
+          <label class="form-label" for="loginPass">Şifre</label>
+          <div class="form-input-wrap">
+            <span class="form-input-icon">🔒</span>
+            <input class="form-input" type="password" id="loginPass" placeholder="••••••••" autocomplete="current-password" required />
+          </div>
+        </div>
+
+        <button class="btn-login" id="loginBtn" type="submit">
+          <span>Giriş Yap</span>
+          <span>→</span>
+        </button>
+      </form>
+
+      <div class="login-hint">
+        Demo Giriş Bilgileri: <code>admin</code> / <code>bookntea2026</code>
+      </div>
+    </div>
+  </div>
+
+  <!-- ==========================================================================
+       2. MAIN ADMIN APP LAYOUT
+       ========================================================================== -->
+  <div class="admin-layout" id="adminApp">
+
+    <!-- Mobile Sidebar Backdrop -->
+    <div class="sidebar-backdrop" id="sidebarBackdrop"></div>
+
+    <!-- Fixed Sidebar -->
+    <aside class="sidebar" id="sidebar">
+      <div class="sidebar-header">
+        <div class="sidebar-brand-crest">❧</div>
+        <div class="sidebar-brand-text">
+          <span class="sidebar-brand-title">Book & Tea</span>
+          <span class="sidebar-brand-badge">Admin Paneli</span>
+        </div>
+      </div>
+
+      <nav class="sidebar-nav">
+        <div class="sidebar-section-title">Yönetim</div>
+        <a class="nav-link is-active" href="#dashboard" data-nav="dashboard">
+          <span class="nav-link-icon">🏠</span>
+          <span>Dashboard</span>
+        </a>
+        <a class="nav-link" href="#menu" data-nav="menu">
+          <span class="nav-link-icon">🍽️</span>
+          <span>Menü Yönetimi</span>
+        </a>
+        <a class="nav-link" href="#categories" data-nav="categories">
+          <span class="nav-link-icon">📂</span>
+          <span>Kategoriler</span>
+        </a>
+        <a class="nav-link" href="#options" data-nav="options">
+          <span class="nav-link-icon">🥛</span>
+          <span>Ürün Seçenekleri</span>
+        </a>
+        <a class="nav-link" href="#tables" data-nav="tables">
+          <span class="nav-link-icon">🪑</span>
+          <span>Masalar (12)</span>
+        </a>
+
+        <div class="sidebar-section-title">Operasyon</div>
+        <a class="nav-link" href="#staff" data-nav="staff">
+          <span class="nav-link-icon">👤</span>
+          <span>Personel</span>
+        </a>
+        <a class="nav-link" href="#settings" data-nav="settings">
+          <span class="nav-link-icon">⚙️</span>
+          <span>Ayarlar</span>
+        </a>
+      </nav>
+
+      <div class="sidebar-external">
+        <div class="sidebar-section-title">Hızlı Bağlantılar</div>
+        <a class="external-link" href="index.html" target="_blank" title="Müşteri QR Menüsünü Aç">
+          <span>📱</span>
+          <span>QR Menüyü Aç ↗</span>
+        </a>
+        <a class="external-link" href="staff.html" target="_blank" title="Mutfak & Garson Panelini Aç">
+          <span>🛎️</span>
+          <span>Personel Paneli ↗</span>
+        </a>
+      </div>
+
+      <div class="sidebar-footer">
+        <div class="admin-user-pill">
+          <div class="admin-avatar">A</div>
+          <div class="admin-info">
+            <span class="admin-name">Yönetici</span>
+            <span class="admin-role">Çevrimiçi</span>
+          </div>
+        </div>
+        <button class="btn-logout" id="logoutBtn" type="button" title="Güvenli Çıkış Yap">
+          🚪
+        </button>
+      </div>
+    </aside>
+
+    <!-- Main Content Area -->
+    <div class="main-wrapper">
+      <!-- Topbar Header -->
+      <header class="topbar">
+        <div class="topbar-left">
+          <button class="mobile-nav-toggle" id="mobileNavToggle" type="button" aria-label="Menüyü Aç">
+            ☰
+          </button>
+          <div class="topbar-heading">
+            <h2 class="topbar-title" id="topbarTitle">Dashboard</h2>
+            <span class="topbar-breadcrumb" id="topbarBreadcrumb">Genel Bakış & İstatistikler</span>
+          </div>
+        </div>
+
+        <div class="topbar-right">
+          <div class="system-status-pill">
+            <span class="status-dot"></span>
+            <span>Sistem Aktif • Demo Modu</span>
+          </div>
+          <button class="btn-topbar-action" id="topbarQuickAddBtn" type="button">
+            <span>+</span>
+            <span>Yeni Ürün</span>
+          </button>
+        </div>
+      </header>
+
+      <!-- Page Viewport -->
+      <main class="page-viewport">
+
+        <!-- ==================================================================
+             SECTION 1: DASHBOARD
+             ================================================================== -->
+        <section class="admin-section is-active" id="section-dashboard">
+          <!-- 5 Metric Cards -->
+          <div class="stats-grid">
+            <div class="stat-card">
+              <div class="stat-icon-wrap stat-icon-wrap--products">🍵</div>
+              <div class="stat-content">
+                <span class="stat-label">Toplam Ürün</span>
+                <span class="stat-value" id="statTotalProducts">0</span>
+              </div>
+            </div>
+            <div class="stat-card">
+              <div class="stat-icon-wrap stat-icon-wrap--active">✓</div>
+              <div class="stat-content">
+                <span class="stat-label">Aktif Ürün</span>
+                <span class="stat-value" id="statActiveProducts">0</span>
+              </div>
+            </div>
+            <div class="stat-card">
+              <div class="stat-icon-wrap stat-icon-wrap--passive">⏸</div>
+              <div class="stat-content">
+                <span class="stat-label">Pasif Ürün</span>
+                <span class="stat-value" id="statPassiveProducts">0</span>
+              </div>
+            </div>
+            <div class="stat-card">
+              <div class="stat-icon-wrap stat-icon-wrap--cats">📂</div>
+              <div class="stat-content">
+                <span class="stat-label">Toplam Kategori</span>
+                <span class="stat-value" id="statTotalCategories">0</span>
+              </div>
+            </div>
+            <div class="stat-card">
+              <div class="stat-icon-wrap stat-icon-wrap--tables">🪑</div>
+              <div class="stat-content">
+                <span class="stat-label">Toplam Masa</span>
+                <span class="stat-value" id="statTotalTables">12</span>
+              </div>
+            </div>
+          </div>
+
+          <!-- Dashboard 2-Col Grid: Content + Live Phone Preview -->
+          <div class="dashboard-grid">
+            <div class="dashboard-main-col">
+              <!-- Recent Products Card -->
+              <div class="admin-card">
+                <div class="card-header-clean">
+                  <div>
+                    <h3 class="card-title">Son Eklenen Ürünler</h3>
+                    <p class="card-subtitle">Menüye en son dahil edilen kahve, çay ve tatlılar</p>
+                  </div>
+                  <button class="btn-secondary" type="button" onclick="navigateTo('menu')">
+                    Tümünü Gör →
+                  </button>
+                </div>
+                <div class="mini-product-list" id="dashboardRecentList">
+                  <!-- Injected via JS -->
+                </div>
+              </div>
+
+              <!-- Popular Products Card -->
+              <div class="admin-card">
+                <div class="card-header-clean">
+                  <div>
+                    <h3 class="card-title">En Popüler Ürünler (Bestsellers)</h3>
+                    <p class="card-subtitle">Müşterilerin en çok tercih ettiği imza lezzetler</p>
+                  </div>
+                  <span class="badge-pill badge-pill--bestseller">⭐ Öne Çıkanlar</span>
+                </div>
+                <div class="mini-product-list" id="dashboardPopularList">
+                  <!-- Injected via JS -->
+                </div>
+              </div>
+
+              <!-- Quick Tables Summary -->
+              <div class="admin-card">
+                <div class="card-header-clean">
+                  <div>
+                    <h3 class="card-title">Masaların Anlık Durumu</h3>
+                    <p class="card-subtitle">12 masanın QR sipariş durumu</p>
+                  </div>
+                  <button class="btn-secondary" type="button" onclick="navigateTo('tables')">
+                    Masa Detayları →
+                  </button>
+                </div>
+                <div class="dashboard-tables-summary" id="dashboardTablesSummary">
+                  <!-- Injected via JS (12 tables) -->
+                </div>
+              </div>
+            </div>
+
+            <!-- Phone Preview Column -->
+            <div class="phone-preview-container">
+              <div class="phone-card-wrap">
+                <div class="phone-mockup">
+                  <!-- Dynamic Island -->
+                  <div class="phone-island">
+                    <div class="phone-camera-lens"></div>
+                  </div>
+
+                  <!-- Inside Phone Screen: Signature Book & Tea Experience -->
+                  <div class="phone-screen">
+                    <div class="phone-header">
+                      <div class="phone-badge">📍 Masa 04</div>
+                      <div class="phone-title">Book & Tea House</div>
+                    </div>
+
+                    <!-- Category Chips -->
+                    <div class="phone-categories" id="phoneCategories">
+                      <!-- Injected dynamically -->
+                    </div>
+
+                    <!-- Scrollable Product List -->
+                    <div class="phone-scroll-body" id="phoneProductList">
+                      <!-- Injected dynamically -->
+                    </div>
+
+                    <!-- Mini Cart Bar -->
+                    <div class="phone-cart-bar">
+                      <span class="phone-cart-text">🛍️ Sipariş Hazır</span>
+                      <span class="phone-cart-btn">Sepetim</span>
+                    </div>
+                  </div>
+                </div>
+              </div>
+              <a class="btn-secondary" href="index.html" target="_blank" style="width: 100%; justify-content: center;">
+                <span>📱 Menüyü Tam Ekran Aç</span>
+              </a>
+            </div>
+          </div>
+        </section>
+
+        <!-- ==================================================================
+             SECTION 2: MENU MANAGEMENT
+             ================================================================== -->
+        <section class="admin-section" id="section-menu">
+          <div class="section-toolbar">
+            <div class="toolbar-filters">
+              <div class="search-box-clean">
+                <span class="search-box-icon">🔍</span>
+                <input class="search-box-input" type="text" id="menuSearchInput" placeholder="Ürün adı veya açıklama ara..." />
+                <button class="search-clear-btn" id="menuSearchClear" type="button">✕</button>
+              </div>
+
+              <select class="select-clean" id="menuCategoryFilter">
+                <option value="all">Tüm Kategoriler</option>
+                <!-- Injected via JS -->
+              </select>
+
+              <select class="select-clean" id="menuStatusFilter">
+                <option value="all">Tüm Durumlar</option>
+                <option value="active">Yalnızca Aktif</option>
+                <option value="passive">Yalnızca Pasif</option>
+              </select>
+            </div>
+
+            <button class="btn-primary" id="btnOpenAddProduct" type="button">
+              <span>+</span>
+              <span>Yeni Ürün Ekle</span>
+            </button>
+          </div>
+
+          <div class="admin-card">
+            <div class="table-responsive">
+              <table class="custom-table" id="productsTable">
+                <thead>
+                  <tr>
+                    <th>Görsel</th>
+                    <th>Ürün Bilgisi</th>
+                    <th>Kategori</th>
+                    <th>Fiyat</th>
+                    <th>Etiketler</th>
+                    <th>Aktif / Pasif</th>
+                    <th>İşlemler</th>
+                  </tr>
+                </thead>
+                <tbody id="productsTableBody">
+                  <!-- Injected via JS -->
+                </tbody>
+              </table>
+            </div>
+          </div>
+        </section>
+
+        <!-- ==================================================================
+             SECTION 3: CATEGORIES MANAGEMENT
+             ================================================================== -->
+        <section class="admin-section" id="section-categories">
+          <div class="section-toolbar">
+            <div>
+              <h3 class="card-title">Kategori Yönetimi</h3>
+              <p class="card-subtitle">QR Menü'de listelenen kategorileri ve sıralamalarını düzenleyin</p>
+            </div>
+            <button class="btn-primary" id="btnOpenAddCategory" type="button">
+              <span>+</span>
+              <span>Yeni Kategori Ekle</span>
+            </button>
+          </div>
+
+          <div class="categories-grid" id="categoriesGrid">
+            <!-- Injected via JS -->
+          </div>
+        </section>
+
+        <!-- ==================================================================
+             SECTION 4: PRODUCT OPTIONS (MILK, SUGAR, EXTRAS)
+             ================================================================== -->
+        <section class="admin-section" id="section-options">
+          <div class="section-toolbar">
+            <div>
+              <h3 class="card-title">Ürün Seçenekleri & Özelleştirme</h3>
+              <p class="card-subtitle">Süt tercihleri, şeker dereceleri ve ekstralar</p>
+            </div>
+            <button class="btn-primary" id="btnOpenAddOption" type="button">
+              <span>+</span>
+              <span>Yeni Seçenek Değeri Ekle</span>
+            </button>
+          </div>
+
+          <!-- 3 Option Groups -->
+          <div class="options-columns">
+            <!-- Milk -->
+            <div class="option-group-card">
+              <div class="option-group-header">
+                <div class="option-group-title">
+                  <span>🥛</span>
+                  <span>Süt Seçenekleri</span>
+                </div>
+                <span class="badge-pill badge-pill--active" id="milkCountBadge">4 Seçenek</span>
+              </div>
+              <div class="option-items-list" id="milkOptionsList">
+                <!-- Injected via JS -->
+              </div>
+            </div>
+
+            <!-- Sugar -->
+            <div class="option-group-card">
+              <div class="option-group-header">
+                <div class="option-group-title">
+                  <span>🍬</span>
+                  <span>Şeker Dereceleri</span>
+                </div>
+                <span class="badge-pill badge-pill--active" id="sugarCountBadge">4 Seçenek</span>
+              </div>
+              <div class="option-items-list" id="sugarOptionsList">
+                <!-- Injected via JS -->
+              </div>
+            </div>
+
+            <!-- Extras -->
+            <div class="option-group-card">
+              <div class="option-group-header">
+                <div class="option-group-title">
+                  <span>✨</span>
+                  <span>Ekstralar & Şuruplar</span>
+                </div>
+                <span class="badge-pill badge-pill--active" id="extrasCountBadge">4 Seçenek</span>
+              </div>
+              <div class="option-items-list" id="extrasOptionsList">
+                <!-- Injected via JS -->
+              </div>
+            </div>
+          </div>
+
+          <!-- Product - Option Group Mapping Section -->
+          <div class="mapping-card">
+            <div class="card-header-clean">
+              <div>
+                <h3 class="card-title">Ürün - Seçenek Eşleştirme</h3>
+                <p class="card-subtitle">Seçilen üründe müşteriye hangi seçenek gruplarının sunulacağını belirleyin</p>
+              </div>
+            </div>
+
+            <div class="mapping-product-select-row">
+              <label class="form-label" style="margin-bottom:0; min-width: 110px;">Ürün Seçin:</label>
+              <select class="select-clean" id="mappingProductSelect" style="max-width: 320px;">
+                <!-- Injected via JS -->
+              </select>
+            </div>
+
+            <div class="mapping-checkboxes-grid">
+              <label class="mapping-checkbox-label">
+                <input type="checkbox" id="mapMilkCheck" />
+                <span>🥛 Süt Tercihi Grubu</span>
+              </label>
+              <label class="mapping-checkbox-label">
+                <input type="checkbox" id="mapSugarCheck" />
+                <span>🍬 Şeker Derecesi Grubu</span>
+              </label>
+              <label class="mapping-checkbox-label">
+                <input type="checkbox" id="mapExtrasCheck" />
+                <span>✨ Ekstralar Grubu</span>
+              </label>
+            </div>
+
+            <div style="margin-top: 1.25rem;">
+              <button class="btn-primary" id="btnSaveMapping" type="button">
+                <span>Eşleştirmeyi Kaydet</span>
+              </button>
+            </div>
+          </div>
+        </section>
+
+        <!-- ==================================================================
+             SECTION 5: TABLES MANAGEMENT (EXACTLY 12 TABLES)
+             ================================================================== -->
+        <section class="admin-section" id="section-tables">
+          <div class="section-toolbar">
+            <div>
+              <h3 class="card-title">Masa & QR Kod Yönetimi</h3>
+              <p class="card-subtitle">Book N Tea bünyesindeki 12 masanın QR kodları ve durumları</p>
+            </div>
+            <a class="btn-secondary" href="qr.html" target="_blank">
+              <span>🖨️ Toplu Masa QR Yazdır</span>
+            </a>
+          </div>
+
+          <div class="tables-grid-12" id="tablesGrid">
+            <!-- 12 Tables Injected via JS -->
+          </div>
+        </section>
+
+        <!-- ==================================================================
+             SECTION 6: STAFF MANAGEMENT
+             ================================================================== -->
+        <section class="admin-section" id="section-staff">
+          <div class="section-toolbar">
+            <div>
+              <h3 class="card-title">Personel Yönetimi</h3>
+              <p class="card-subtitle">Kafe garson ve yönetici ekibi</p>
+            </div>
+            <button class="btn-primary" id="btnOpenAddStaff" type="button">
+              <span>+</span>
+              <span>Yeni Personel Ekle</span>
+            </button>
+          </div>
+
+          <div class="staff-grid" id="staffGrid">
+            <!-- Injected via JS -->
+          </div>
+        </section>
+
+        <!-- ==================================================================
+             SECTION 7: SETTINGS
+             ================================================================== -->
+        <section class="admin-section" id="section-settings">
+          <div class="settings-container">
+            <div class="admin-card">
+              <div class="card-header-clean">
+                <div>
+                  <h3 class="card-title">Kafe Bilgileri & Genel Ayarlar</h3>
+                  <p class="card-subtitle">İşletme iletişim bilgileri ve servis özellikleri</p>
+                </div>
+              </div>
+
+              <form id="settingsForm" onsubmit="return false;">
+                <div class="settings-group">
+                  <div class="settings-row">
+                    <div class="settings-label-wrap">
+                      <span class="settings-label">Kafe Adı</span>
+                      <span class="settings-desc">QR Menü ve panellerde görünen isim</span>
+                    </div>
+                    <input class="input-clean" type="text" id="settingCafeName" value="Book N Tea" />
+                  </div>
+
+                  <div class="settings-row">
+                    <div class="settings-label-wrap">
+                      <span class="settings-label">Slogan</span>
+                      <span class="settings-desc">Başlık altındaki karşılama sözü</span>
+                    </div>
+                    <input class="input-clean" type="text" id="settingSlogan" value="A sanctuary for book lovers & tea connoisseurs" />
+                  </div>
+
+                  <div class="settings-row">
+                    <div class="settings-label-wrap">
+                      <span class="settings-label">Telefon Numarası</span>
+                      <span class="settings-desc">İletişim ve rezervasyon hattı</span>
+                    </div>
+                    <input class="input-clean" type="text" id="settingPhone" value="+90 212 555 01 23" />
+                  </div>
+
+                  <div class="settings-row">
+                    <div class="settings-label-wrap">
+                      <span class="settings-label">Adres</span>
+                      <span class="settings-desc">Kafenin fiziksel konumu</span>
+                    </div>
+                    <input class="input-clean" type="text" id="settingAddress" value="Kütüphane Cad. No: 42, Moda / Kadıköy" />
+                  </div>
+
+                  <div class="settings-row">
+                    <div class="settings-label-wrap">
+                      <span class="settings-label">Instagram Hesabı</span>
+                      <span class="settings-desc">Sosyal medya kullanıcı adı</span>
+                    </div>
+                    <input class="input-clean" type="text" id="settingInstagram" value="@booknteahouse" />
+                  </div>
+
+                  <div class="settings-row">
+                    <div class="settings-label-wrap">
+                      <span class="settings-label">Çalışma Saatleri</span>
+                      <span class="settings-desc">Müşterilere açık olunan saatler</span>
+                    </div>
+                    <input class="input-clean" type="text" id="settingHours" value="Hergün: 08:30 - 23:30" />
+                  </div>
+
+                  <div class="settings-row">
+                    <div class="settings-label-wrap">
+                      <span class="settings-label">"Garson Çağır" Butonu</span>
+                      <span class="settings-desc">QR Menü'de müşterilerin garson çağırabilmesi</span>
+                    </div>
+                    <label class="switch-control">
+                      <input type="checkbox" id="settingCallWaiter" checked />
+                      <span class="switch-slider"></span>
+                    </label>
+                  </div>
+
+                  <div class="settings-row">
+                    <div class="settings-label-wrap">
+                      <span class="settings-label">"Hesap İste" Butonu</span>
+                      <span class="settings-desc">QR Menü'de müşterilerin adisyon talep edebilmesi</span>
+                    </div>
+                    <label class="switch-control">
+                      <input type="checkbox" id="settingRequestBill" checked />
+                      <span class="switch-slider"></span>
+                    </label>
+                  </div>
+
+                  <div class="settings-row">
+                    <div class="settings-label-wrap">
+                      <span class="settings-label">Sipariş Bildirim Sesi</span>
+                      <span class="settings-desc">Yeni sipariş ve servis bildirim zili</span>
+                    </div>
+                    <label class="switch-control">
+                      <input type="checkbox" id="settingSoundNotification" checked />
+                      <span class="switch-slider"></span>
+                    </label>
+                  </div>
+                </div>
+
+                <div style="display: flex; justify-content: flex-end;">
+                  <button class="btn-primary" id="btnSaveSettings" type="submit">
+                    <span>Ayarları Kaydet</span>
+                  </button>
+                </div>
+              </form>
+            </div>
+          </div>
+        </section>
+
+      </main>
+    </div>
+  </div>
+
+  <!-- ==========================================================================
+       3. MODALS
+       ========================================================================== -->
+
+  <!-- Product Modal (Add / Edit) -->
+  <div class="modal-overlay" id="productModal">
+    <div class="modal-box">
+      <div class="modal-header">
+        <h3 class="modal-title" id="productModalTitle">Yeni Ürün Ekle</h3>
+        <button class="modal-close-btn" type="button" onclick="closeModal('productModal')">✕</button>
+      </div>
+
+      <form id="productForm" onsubmit="return false;">
+        <input type="hidden" id="productFormId" />
+        <div class="modal-body">
+          <div class="form-field">
+            <label class="form-label" for="productFormName">Ürün Adı *</label>
+            <input class="input-clean" type="text" id="productFormName" placeholder="Örn. Earl Grey Royal" required />
+          </div>
+
+          <div class="form-field">
+            <label class="form-label" for="productFormDesc">Açıklama</label>
+            <textarea class="textarea-clean" id="productFormDesc" placeholder="Ürün içerik bilgisi ve lezzet notaları..."></textarea>
+          </div>
+
+          <div style="display: grid; grid-template-columns: 1fr 1fr; gap: 1rem;">
+            <div class="form-field">
+              <label class="form-label" for="productFormCategory">Kategori *</label>
+              <select class="select-clean" id="productFormCategory" required>
+                <!-- Injected via JS -->
+              </select>
+            </div>
+
+            <div class="form-field">
+              <label class="form-label" for="productFormPrice">Fiyat (₺) *</label>
+              <input class="input-clean" type="number" id="productFormPrice" min="0" step="1" placeholder="120" required />
+            </div>
+          </div>
+
+          <!-- Product Image Presets & Input -->
+          <div class="form-field">
+            <label class="form-label">Ürün Görseli</label>
+            <input class="input-clean" type="text" id="productFormImg" placeholder="assets/latte.png" />
+            <div style="font-size: 0.78rem; color: var(--coffee-muted); margin-top: 0.25rem;">Hızlı Görsel Seçimi:</div>
+            <div class="image-selector-grid" id="imagePresetGrid">
+              <div class="image-preset-option" data-img="assets/earl_grey.png">
+                <img src="assets/earl_grey.png" alt="Çay" />
+              </div>
+              <div class="image-preset-option" data-img="assets/latte.png">
+                <img src="assets/latte.png" alt="Kahve" />
+              </div>
+              <div class="image-preset-option" data-img="assets/avocado_toast.png">
+                <img src="assets/avocado_toast.png" alt="Fırın" />
+              </div>
+              <div class="image-preset-option" data-img="assets/cheesecake.png">
+                <img src="assets/cheesecake.png" alt="Tatlı" />
+              </div>
+              <div class="image-preset-option" data-img="assets/hero.png">
+                <img src="assets/hero.png" alt="Kitap" />
+              </div>
+            </div>
+          </div>
+
+          <!-- Flags / Checkboxes -->
+          <div style="display: flex; gap: 1.5rem; flex-wrap: wrap; margin-top: 0.5rem;">
+            <label class="mapping-checkbox-label" style="flex:1;">
+              <input type="checkbox" id="productFormActive" checked />
+              <span>✓ Aktif Ürün</span>
+            </label>
+            <label class="mapping-checkbox-label" style="flex:1;">
+              <input type="checkbox" id="productFormBestseller" />
+              <span>⭐ Popüler Ürün</span>
+            </label>
+            <label class="mapping-checkbox-label" style="flex:1;">
+              <input type="checkbox" id="productFormNew" />
+              <span>✨ Yeni Ürün</span>
+            </label>
+          </div>
+        </div>
+
+        <div class="modal-footer">
+          <button class="btn-secondary" type="button" onclick="closeModal('productModal')">İptal</button>
+          <button class="btn-primary" id="btnSaveProduct" type="submit">Kaydet</button>
+        </div>
+      </form>
+    </div>
+  </div>
+
+  <!-- Category Modal (Add / Edit) -->
+  <div class="modal-overlay" id="categoryModal">
+    <div class="modal-box" style="max-width: 440px;">
+      <div class="modal-header">
+        <h3 class="modal-title" id="categoryModalTitle">Yeni Kategori Ekle</h3>
+        <button class="modal-close-btn" type="button" onclick="closeModal('categoryModal')">✕</button>
+      </div>
+
+      <form id="categoryForm" onsubmit="return false;">
+        <input type="hidden" id="categoryFormId" />
+        <div class="modal-body">
+          <div class="form-field">
+            <label class="form-label" for="categoryFormName">Kategori Adı *</label>
+            <input class="input-clean" type="text" id="categoryFormName" placeholder="Örn. Soğuk Kahveler" required />
+          </div>
+
+          <div class="form-field">
+            <label class="form-label" for="categoryFormIcon">İkon / Emoji *</label>
+            <input class="input-clean" type="text" id="categoryFormIcon" placeholder="Örn. 🧊 veya ☕" required />
+          </div>
+        </div>
+
+        <div class="modal-footer">
+          <button class="btn-secondary" type="button" onclick="closeModal('categoryModal')">İptal</button>
+          <button class="btn-primary" id="btnSaveCategory" type="submit">Kaydet</button>
+        </div>
+      </form>
+    </div>
+  </div>
+
+  <!-- Option Modal (Add / Edit) -->
+  <div class="modal-overlay" id="optionModal">
+    <div class="modal-box" style="max-width: 460px;">
+      <div class="modal-header">
+        <h3 class="modal-title" id="optionModalTitle">Yeni Seçenek Ekle</h3>
+        <button class="modal-close-btn" type="button" onclick="closeModal('optionModal')">✕</button>
+      </div>
+
+      <form id="optionForm" onsubmit="return false;">
+        <input type="hidden" id="optionFormId" />
+        <div class="modal-body">
+          <div class="form-field">
+            <label class="form-label" for="optionFormGroup">Seçenek Grubu *</label>
+            <select class="select-clean" id="optionFormGroup" required>
+              <option value="milk">🥛 Süt Seçenekleri</option>
+              <option value="sugar">🍬 Şeker Dereceleri</option>
+              <option value="extras">✨ Ekstralar & Şuruplar</option>
+            </select>
+          </div>
+
+          <div class="form-field">
+            <label class="form-label" for="optionFormName">Seçenek Adı *</label>
+            <input class="input-clean" type="text" id="optionFormName" placeholder="Örn. Hindistan Cevizi Sütü" required />
+          </div>
+
+          <div class="form-field">
+            <label class="form-label" for="optionFormPrice">Ek Ücret (₺)</label>
+            <input class="input-clean" type="number" id="optionFormPrice" min="0" step="1" value="0" placeholder="0" />
+          </div>
+        </div>
+
+        <div class="modal-footer">
+          <button class="btn-secondary" type="button" onclick="closeModal('optionModal')">İptal</button>
+          <button class="btn-primary" id="btnSaveOption" type="submit">Kaydet</button>
+        </div>
+      </form>
+    </div>
+  </div>
+
+  <!-- Staff Modal (Add / Edit) -->
+  <div class="modal-overlay" id="staffModal">
+    <div class="modal-box" style="max-width: 460px;">
+      <div class="modal-header">
+        <h3 class="modal-title" id="staffModalTitle">Yeni Personel Ekle</h3>
+        <button class="modal-close-btn" type="button" onclick="closeModal('staffModal')">✕</button>
+      </div>
+
+      <form id="staffForm" onsubmit="return false;">
+        <input type="hidden" id="staffFormId" />
+        <div class="modal-body">
+          <div class="form-field">
+            <label class="form-label" for="staffFormName">Ad Soyad *</label>
+            <input class="input-clean" type="text" id="staffFormName" placeholder="Örn. Ali Yılmaz" required />
+          </div>
+
+          <div class="form-field">
+            <label class="form-label" for="staffFormRole">Rol *</label>
+            <select class="select-clean" id="staffFormRole" required>
+              <option value="Garson">Garson</option>
+              <option value="Yönetici">Yönetici</option>
+              <option value="Barista">Barista</option>
+              <option value="Mutfak Şefi">Mutfak Şefi</option>
+            </select>
+          </div>
+
+          <div class="form-field">
+            <label class="form-label" for="staffFormStatus">Durum *</label>
+            <select class="select-clean" id="staffFormStatus" required>
+              <option value="Aktif">Aktif</option>
+              <option value="Molada">Molada</option>
+              <option value="İzinli">İzinli</option>
+            </select>
+          </div>
+
+          <div class="form-field">
+            <label class="form-label" for="staffFormPhone">Telefon</label>
+            <input class="input-clean" type="text" id="staffFormPhone" placeholder="+90 532 000 00 00" />
+          </div>
+        </div>
+
+        <div class="modal-footer">
+          <button class="btn-secondary" type="button" onclick="closeModal('staffModal')">İptal</button>
+          <button class="btn-primary" id="btnSaveStaff" type="submit">Kaydet</button>
+        </div>
+      </form>
+    </div>
+  </div>
+
+  <!-- Table Large QR Modal -->
+  <div class="modal-overlay" id="tableQrModal">
+    <div class="modal-box" style="max-width: 400px; text-align: center;">
+      <div class="modal-header">
+        <h3 class="modal-title" id="tableQrModalTitle">Masa QR Kodu</h3>
+        <button class="modal-close-btn" type="button" onclick="closeModal('tableQrModal')">✕</button>
+      </div>
+      <div class="modal-body" style="align-items: center;">
+        <div id="tableQrModalCode" style="width: 220px; height: 220px; padding: 10px; background: #fff; border: 1px solid var(--border-subtle); border-radius: var(--radius-md);"></div>
+        <p class="table-url-text" id="tableQrModalUrl" style="margin-top: 1rem; word-break: break-all;"></p>
+      </div>
+      <div class="modal-footer" style="justify-content: center; gap: 1rem;">
+        <button class="btn-secondary" type="button" id="tableQrPrintBtn">🖨️ Yazdır</button>
+        <a class="btn-primary" id="tableQrOpenLink" href="#" target="_blank">Menüyü Test Et ↗</a>
+      </div>
+    </div>
+  </div>
+
+  <!-- Confirm Delete Modal -->
+  <div class="modal-overlay" id="confirmModal">
+    <div class="modal-box" style="max-width: 400px; text-align: center;">
+      <div class="modal-header" style="justify-content: center; border-bottom: none; padding-bottom: 0.5rem;">
+        <div style="font-size: 2.5rem;">🗑️</div>
+      </div>
+      <div class="modal-body" style="padding-top: 0; text-align: center;">
+        <h3 class="modal-title" id="confirmModalTitle">Silmek istediğinize emin misiniz?</h3>
+        <p class="card-subtitle" id="confirmModalDesc" style="margin-top: 0.5rem;">Bu işlem geri alınamaz.</p>
+      </div>
+      <div class="modal-footer" style="justify-content: center; gap: 0.75rem;">
+        <button class="btn-secondary" type="button" onclick="closeModal('confirmModal')">Vazgeç</button>
+        <button class="btn-primary" id="confirmModalOkBtn" style="background: var(--color-danger);" type="button">Evet, Sil</button>
+      </div>
+    </div>
+  </div>
+
+  <!-- ==========================================================================
+       4. TOAST CONTAINER
+       ========================================================================== -->
+  <div class="toast-container" id="toastContainer"></div>
+
+  <!-- Vendor QR Code Generator -->
+  <script src="vendor/qrcode.js"></script>
+  <!-- Admin Application Logic -->
+  <script src="admin.js"></script>
+</body>
+</html>
