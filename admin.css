@@ -732,6 +732,8 @@ ul, ol {
   padding: 1.5rem;
   box-shadow: var(--shadow-card);
   transition: box-shadow var(--transition-fast);
+  max-width: 700px;
+  margin-left: 20px;
 }
 
 .admin-card:hover {
@@ -790,6 +792,7 @@ ul, ol {
   align-items: center;
   gap: 0.45rem;
   transition: all var(--transition-fast);
+  margin-right: 40px;
 }
 
 .btn-secondary:hover {
@@ -1166,8 +1169,7 @@ ul, ol {
 .phone-card-wrap {
   width: 100%;
   max-width: 360px;
-  margin-right: 300px; /* desktop */
-  padding-left: 50px; /* desktop */
+  margin-right: 50px; /* desktop */
 }
 
 @media (max-width: 480px) {
@@ -2087,7 +2089,7 @@ ul, ol {
 /* ==========================================================================
    13. RESPONSIVE BREAKPOINTS (Mobile & Tablet Optimization)
    ========================================================================== */
-@media (max-width: 1080px) {
+@media (max-width: 450px) {
   .dashboard-grid {
     grid-template-columns: 1fr;
   }
@@ -2193,6 +2195,7 @@ ul, ol {
   /* Dashboard */
   .dashboard-main-col {
     gap: 1.25rem;
+    max-width: 400px;
   }
   .dashboard-tables-summary {
     grid-template-columns: repeat(4, 1fr);
@@ -2201,6 +2204,7 @@ ul, ol {
     height: 520px;
     border-radius: 36px;
     padding: 8px;
+    max-width: 400px;
   }
   .phone-screen {
     border-radius: 28px;
