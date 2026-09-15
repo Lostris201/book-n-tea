@@ -611,8 +611,10 @@
     sidebarBackdrop.classList.remove('is-mobile-open');
   }
 
+  const sidebarCloseBtn = document.getElementById('sidebarCloseBtn');
   if (mobileNavToggle) mobileNavToggle.addEventListener('click', openMobileSidebar);
   if (sidebarBackdrop) sidebarBackdrop.addEventListener('click', closeMobileSidebar);
+  if (sidebarCloseBtn) sidebarCloseBtn.addEventListener('click', closeMobileSidebar);
 
   if (topbarQuickAddBtn) {
     topbarQuickAddBtn.addEventListener('click', function () {

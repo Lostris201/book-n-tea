@@ -1,8 +1,20 @@
+/* ==========================================================================
+   BOOK & TEA HOUSE — Staff / Kitchen Panel
+   ========================================================================== */
+
 const board = document.getElementById("board");
 const emptyState = document.getElementById("emptyState");
 const orderCount = document.getElementById("orderCount");
 const filters = document.querySelectorAll(".filter");
 const soundToggle = document.getElementById("soundToggle");
+
+// Ödeme modalı elementleri
+const paymentModal = document.getElementById("paymentModal");
+const paymentModalBackdrop = document.getElementById("paymentModalBackdrop");
+const paymentModalTable = document.getElementById("paymentModalTable");
+const paymentModalTotal = document.getElementById("paymentModalTotal");
+const paymentModalCancel = document.getElementById("paymentModalCancel");
+const paymentModalConfirm = document.getElementById("paymentModalConfirm");
 
 let currentFilter = "all";
 let orders = [];
@@ -12,6 +24,12 @@ let seenOrderIds = null; // null until the first fetch has been processed
 const FLASH_DURATION_MS = 5400;
 const flashUntil = new Map(); // orderId -> timestamp when the flash should stop
 
+// Ödeme bekleyen sipariş bilgisi
+let pendingCloseOrderId = null;
+
+/* --------------------------------------------------------------------------
+   Ses bildirimi
+   -------------------------------------------------------------------------- */
 soundToggle.addEventListener("click", () => {
   try {
     audioCtx = new (window.AudioContext || window.webkitAudioContext)();
@@ -24,9 +42,7 @@ soundToggle.addEventListener("click", () => {
 
 function playAlertTone() {
   if (!soundEnabled || !audioCtx) return;
-
   audioCtx.resume();
-
   [880, 1046.5].forEach((freq, i) => {
     const oscillator = audioCtx.createOscillator();
     const gain = audioCtx.createGain();
@@ -34,10 +50,7 @@ function playAlertTone() {
     oscillator.frequency.value = freq;
     gain.gain.setValueAtTime(0.0001, audioCtx.currentTime);
     gain.gain.exponentialRampToValueAtTime(0.2, audioCtx.currentTime + 0.02);
-    gain.gain.exponentialRampToValueAtTime(
-      0.0001,
-      audioCtx.currentTime + 0.25
-    );
+    gain.gain.exponentialRampToValueAtTime(0.0001, audioCtx.currentTime + 0.25);
     oscillator.connect(gain).connect(audioCtx.destination);
     const start = audioCtx.currentTime + i * 0.18;
     oscillator.start(start);
@@ -45,6 +58,9 @@ function playAlertTone() {
   });
 }
 
+/* --------------------------------------------------------------------------
+   Sabit etiket ve aksiyon haritaları
+   -------------------------------------------------------------------------- */
 const STATUS_LABEL = {
   new: "Yeni",
   preparing: "Hazırlanıyor",
@@ -57,6 +73,9 @@ const NEXT_ACTION = {
   ready: { status: "done", label: "Teslim" },
 };
 
+/* --------------------------------------------------------------------------
+   Filtre butonları
+   -------------------------------------------------------------------------- */
 filters.forEach((btn) => {
   btn.addEventListener("click", () => {
     currentFilter = btn.dataset.filter;
@@ -66,6 +85,9 @@ filters.forEach((btn) => {
   });
 });
 
+/* --------------------------------------------------------------------------
+   API: Siparişleri çek
+   -------------------------------------------------------------------------- */
 async function fetchOrders() {
   try {
     const res = await fetch("/api/orders");
@@ -92,6 +114,18 @@ async function fetchOrders() {
   }
 }
 
+/* --------------------------------------------------------------------------
+   Yardımcı: Sipariş toplam tutarını hesapla
+   -------------------------------------------------------------------------- */
+function calcOrderTotal(order) {
+  return order.items.reduce((sum, item) => {
+    return sum + (Number(item.price) || 0) * (Number(item.qty) || 1);
+  }, 0);
+}
+
+/* --------------------------------------------------------------------------
+   Render: Sipariş kartlarını oluştur
+   -------------------------------------------------------------------------- */
 function render() {
   const visible =
     currentFilter === "all"
@@ -127,6 +161,7 @@ function render() {
 
     const next = NEXT_ACTION[order.status];
     const time = formatTime(order.createdAt);
+    const total = calcOrderTotal(order);
 
     card.innerHTML = `
       <div class="order__top">
@@ -135,22 +170,14 @@ function render() {
       </div>
       <span class="order__status">${STATUS_LABEL[order.status] || order.status}</span>
       <ul class="order__items">${itemsHtml}</ul>
-      ${
-        order.note
-          ? `<p class="order__note">${escapeHtml(order.note)}</p>`
-          : ""
-      }
+      ${order.note ? `<p class="order__note">${escapeHtml(order.note)}</p>` : ""}
+      <div class="order__total">
+        <span class="order__total-label">Toplam</span>
+        <span class="order__total-amount">${total} ₺</span>
+      </div>
       <div class="order__actions">
-        ${
-          next
-            ? `<button type="button" class="is-primary" data-status="${next.status}">${next.label}</button>`
-            : ""
-        }
-        ${
-          order.status !== "done"
-            ? `<button type="button" data-status="done">Kapat</button>`
-            : ""
-        }
+        ${next ? `<button type="button" class="is-primary" data-status="${next.status}">${next.label}</button>` : ""}
+        ${order.status !== "done" ? `<button type="button" data-action="close-with-payment">Kapat</button>` : ""}
       </div>
     `;
 
@@ -167,30 +194,90 @@ function render() {
   });
 }
 
+/* --------------------------------------------------------------------------
+   Board tıklama olayları
+   -------------------------------------------------------------------------- */
 board.addEventListener("click", async (e) => {
-  const btn = e.target.closest("button[data-status]");
-  if (!btn) return;
+  // Durum değiştirme butonları: Hazırla / Hazır / Teslim
+  const statusBtn = e.target.closest("button[data-status]");
+  if (statusBtn) {
+    const card = statusBtn.closest(".order");
+    const id = card?.dataset.id;
+    const status = statusBtn.dataset.status;
+    if (!id) return;
 
-  const card = btn.closest(".order");
-  const id = card?.dataset.id;
-  const status = btn.dataset.status;
-  if (!id) return;
+    statusBtn.disabled = true;
+    try {
+      const res = await fetch(`/api/orders/${id}`, {
+        method: "PATCH",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({ status }),
+      });
+      if (!res.ok) throw new Error("güncellenemedi");
+      await fetchOrders();
+    } catch {
+      statusBtn.disabled = false;
+    }
+    return;
+  }
 
-  btn.disabled = true;
+  // Kapat butonu → önce ödeme onayı modalını aç
+  const closeBtn = e.target.closest('[data-action="close-with-payment"]');
+  if (closeBtn) {
+    const card = closeBtn.closest(".order");
+    const id = card?.dataset.id;
+    if (!id) return;
+
+    const order = orders.find((o) => o.id === id);
+    if (!order) return;
+
+    const total = calcOrderTotal(order);
+    pendingCloseOrderId = id;
+
+    paymentModalTable.textContent = `Masa ${order.table}`;
+    paymentModalTotal.textContent = `${total} ₺`;
+    paymentModal.hidden = false;
+  }
+});
+
+/* --------------------------------------------------------------------------
+   Ödeme Onayı Modalı
+   -------------------------------------------------------------------------- */
+function closePaymentModal() {
+  paymentModal.hidden = true;
+  pendingCloseOrderId = null;
+}
+
+paymentModalCancel.addEventListener("click", closePaymentModal);
+paymentModalBackdrop.addEventListener("click", closePaymentModal);
+
+paymentModalConfirm.addEventListener("click", async () => {
+  if (!pendingCloseOrderId) return;
+
+  const id = pendingCloseOrderId;
+  paymentModalConfirm.disabled = true;
+  paymentModalConfirm.textContent = "Kapatılıyor...";
 
   try {
     const res = await fetch(`/api/orders/${id}`, {
       method: "PATCH",
       headers: { "Content-Type": "application/json" },
-      body: JSON.stringify({ status }),
+      body: JSON.stringify({ status: "done" }),
     });
     if (!res.ok) throw new Error("güncellenemedi");
+    closePaymentModal();
     await fetchOrders();
   } catch {
-    btn.disabled = false;
+    paymentModalConfirm.textContent = "Hata! Tekrar Dene";
+  } finally {
+    paymentModalConfirm.disabled = false;
+    paymentModalConfirm.textContent = "✓ Ödeme Alındı, Kapat";
   }
 });
 
+/* --------------------------------------------------------------------------
+   Yardımcı fonksiyonlar
+   -------------------------------------------------------------------------- */
 function formatTime(iso) {
   try {
     return new Date(iso).toLocaleTimeString("tr-TR", {
@@ -210,5 +297,8 @@ function escapeHtml(str) {
     .replace(/"/g, "&quot;");
 }
 
+/* --------------------------------------------------------------------------
+   Başlat
+   -------------------------------------------------------------------------- */
 fetchOrders();
 setInterval(fetchOrders, 2000);

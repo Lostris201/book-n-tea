@@ -65,5 +65,24 @@
     </div>
 
     <script src="staff.js"></script>
+
+    <!-- Ödeme Onayı Modalı -->
+    <div class="payment-modal" id="paymentModal" hidden aria-modal="true" role="dialog" aria-labelledby="paymentModalTitle">
+      <div class="payment-modal__backdrop" id="paymentModalBackdrop"></div>
+      <div class="payment-modal__box">
+        <div class="payment-modal__icon">💳</div>
+        <h2 class="payment-modal__title" id="paymentModalTitle">Masa Kapatılıyor</h2>
+        <p class="payment-modal__table" id="paymentModalTable">Masa 1</p>
+        <div class="payment-modal__total-block">
+          <span class="payment-modal__total-label">Toplam Tutar</span>
+          <span class="payment-modal__total-val" id="paymentModalTotal">0 ₺</span>
+        </div>
+        <p class="payment-modal__desc">Ödeme alındıktan sonra masayı kapatabilirsiniz.</p>
+        <div class="payment-modal__actions">
+          <button type="button" class="payment-modal__btn payment-modal__btn--cancel" id="paymentModalCancel">İptal</button>
+          <button type="button" class="payment-modal__btn payment-modal__btn--confirm" id="paymentModalConfirm">✓ Ödeme Alındı, Kapat</button>
+        </div>
+      </div>
+    </div>
   </body>
 </html>

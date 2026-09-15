@@ -234,6 +234,46 @@ const MENU_DATA = [
 ];
 
 // 2. Global Application State
+// Admin panelinden kaydedilen veriyi yükle, yoksa MENU_DATA'yı kullan
+function loadMenuData() {
+  try {
+    const raw = localStorage.getItem('bnt_admin_data_v1');
+    if (!raw) return MENU_DATA;
+    const adminData = JSON.parse(raw);
+    if (!adminData.products || adminData.products.length === 0) return MENU_DATA;
+
+    // Sadece aktif ürünleri filtrele, script formatına dönüştür
+    const mapped = adminData.products
+      .filter((p) => p.active !== false)
+      .map((p) => ({
+        id: p.id,
+        name: p.name,
+        category: p.category,
+        price: Number(p.price) || 0,
+        desc: p.desc || '',
+        image: p.image || 'assets/hero.png',
+        bestseller: p.bestseller || false,
+        tags: p.tags || [],
+        tagLabels: buildTagLabels(p),
+        customizable: p.customizable || false,
+      }));
+
+    return mapped.length > 0 ? mapped : MENU_DATA;
+  } catch (e) {
+    console.warn('Admin veri yüklenemedi, varsayılan menü kullanılıyor.', e);
+    return MENU_DATA;
+  }
+}
+
+// Admin'de tagLabels yoksa basit bir etiket seti oluştur
+function buildTagLabels(p) {
+  if (p.tagLabels && p.tagLabels.length > 0) return p.tagLabels;
+  const labels = [];
+  if (p.bestseller) labels.push('⭐ Bestseller');
+  if (p.isNew) labels.push('🆕 Yeni');
+  return labels;
+}
+
 const state = {
   tableNumber: "04",
   cart: new Map(), // key: unique item id or string, val: item object
@@ -243,7 +283,9 @@ const state = {
   selectedProductForCustom: null,
   customQty: 1,
   activeOrder: null,
+  menuData: loadMenuData(), // Admin panelinden senkronize edilmiş menü
 };
+
 
 // 3. DOM Element References
 const loader = document.getElementById("loader");
@@ -346,7 +388,7 @@ function updateTableDisplay() {
 function renderProducts() {
   const query = state.searchQuery.trim().toLowerCase();
 
-  const filtered = MENU_DATA.filter((item) => {
+  const filtered = state.menuData.filter((item) => {
     // Category match
     const catMatch = state.currentCategory === "all" || item.category === state.currentCategory;
 
@@ -494,7 +536,7 @@ productGrid.addEventListener("click", (e) => {
 
   if (addQuickBtn) {
     const id = addQuickBtn.dataset.id;
-    const product = MENU_DATA.find((p) => p.id === id);
+    const product = state.menuData.find((p) => p.id === id);
     if (!product) return;
 
     if (product.customizable) {
@@ -504,7 +546,7 @@ productGrid.addEventListener("click", (e) => {
     }
   } else if (custBtn) {
     const id = custBtn.dataset.id;
-    const product = MENU_DATA.find((p) => p.id === id);
+    const product = state.menuData.find((p) => p.id === id);
     if (product) openCustomizationModal(product);
   } else if (incBtn) {
     const id = incBtn.dataset.id;

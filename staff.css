@@ -392,3 +392,214 @@ body {
   0%, 100% { box-shadow: 0 0 0 0 transparent; }
   50% { box-shadow: 0 0 0 4px var(--amber); }
 }
+
+/* Order Total Row */
+.order__total {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  padding: 0.5rem 0 0;
+  border-top: 1px solid var(--line-subtle);
+  font-size: 0.9rem;
+  font-weight: 700;
+  color: var(--cream);
+}
+
+.order__total-label {
+  color: var(--cream-dim);
+  font-weight: 500;
+  font-size: 0.82rem;
+  letter-spacing: 0.04em;
+  text-transform: uppercase;
+}
+
+.order__total-amount {
+  font-size: 1.1rem;
+  font-weight: 700;
+  color: var(--amber);
+}
+
+/* =============================================
+   Payment Confirmation Modal
+   ============================================= */
+.payment-modal {
+  position: fixed;
+  inset: 0;
+  z-index: 1000;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  padding: 1rem;
+}
+
+.payment-modal[hidden] {
+  display: none;
+}
+
+.payment-modal__backdrop {
+  position: absolute;
+  inset: 0;
+  background: rgba(10, 22, 16, 0.85);
+  backdrop-filter: blur(6px);
+  -webkit-backdrop-filter: blur(6px);
+}
+
+.payment-modal__box {
+  position: relative;
+  z-index: 1;
+  background: linear-gradient(160deg, var(--bg-forest) 0%, var(--bg-dark) 100%);
+  border: 1px solid var(--amber-glow);
+  border-radius: var(--radius-lg);
+  padding: 2.5rem 2rem;
+  max-width: 420px;
+  width: 100%;
+  text-align: center;
+  box-shadow:
+    0 0 0 1px rgba(201, 154, 91, 0.15),
+    0 24px 60px rgba(0, 0, 0, 0.5);
+  animation: slideUpModal 0.3s var(--ease-out);
+}
+
+@keyframes slideUpModal {
+  from { opacity: 0; transform: translateY(20px) scale(0.97); }
+  to   { opacity: 1; transform: translateY(0)   scale(1); }
+}
+
+.payment-modal__icon {
+  font-size: 2.8rem;
+  margin-bottom: 0.75rem;
+  line-height: 1;
+}
+
+.payment-modal__title {
+  font-family: var(--font-heading);
+  font-size: 2rem;
+  font-weight: 700;
+  color: var(--cream);
+  margin-bottom: 0.25rem;
+}
+
+.payment-modal__table {
+  font-size: 0.85rem;
+  color: var(--amber);
+  letter-spacing: 0.06em;
+  text-transform: uppercase;
+  font-weight: 600;
+  margin-bottom: 1.5rem;
+}
+
+.payment-modal__total-block {
+  background: rgba(201, 154, 91, 0.12);
+  border: 1px solid var(--amber-glow);
+  border-radius: var(--radius-md);
+  padding: 1rem 1.5rem;
+  margin-bottom: 1rem;
+  display: flex;
+  flex-direction: column;
+  gap: 0.3rem;
+}
+
+.payment-modal__total-label {
+  font-size: 0.72rem;
+  text-transform: uppercase;
+  letter-spacing: 0.1em;
+  color: var(--cream-dim);
+  font-weight: 500;
+}
+
+.payment-modal__total-val {
+  font-size: 2.2rem;
+  font-weight: 700;
+  color: var(--amber);
+  font-family: var(--font-heading);
+  line-height: 1;
+}
+
+.payment-modal__desc {
+  font-size: 0.83rem;
+  color: var(--cream-dim);
+  margin-bottom: 1.75rem;
+  line-height: 1.5;
+}
+
+.payment-modal__actions {
+  display: flex;
+  gap: 0.75rem;
+}
+
+.payment-modal__btn {
+  flex: 1;
+  padding: 0.8rem 1rem;
+  border-radius: var(--radius-md);
+  font-family: var(--font-body);
+  font-size: 0.88rem;
+  font-weight: 700;
+  cursor: pointer;
+  transition: all 0.2s var(--ease-out);
+  border: 1px solid transparent;
+}
+
+.payment-modal__btn--cancel {
+  background: rgba(247, 243, 234, 0.08);
+  border-color: var(--line-subtle);
+  color: var(--cream-muted);
+}
+
+.payment-modal__btn--cancel:hover {
+  background: rgba(247, 243, 234, 0.16);
+  color: var(--cream);
+}
+
+.payment-modal__btn--confirm {
+  background: var(--amber);
+  border-color: var(--amber);
+  color: var(--bg-dark);
+}
+
+.payment-modal__btn--confirm:hover {
+  background: var(--cream);
+  border-color: var(--cream);
+}
+
+/* Responsive */
+@media (max-width: 640px) {
+  .staff {
+    padding: 1rem 0.75rem 3rem;
+  }
+
+  .staff-header {
+    flex-direction: column;
+    align-items: flex-start;
+    gap: 0.75rem;
+  }
+
+  .staff-header__title {
+    font-size: 1.8rem;
+  }
+
+  .staff-header__meta {
+    width: 100%;
+    justify-content: space-between;
+  }
+
+  .staff-controls {
+    flex-direction: column;
+    align-items: flex-start;
+  }
+
+  .filters {
+    flex-wrap: wrap;
+  }
+
+  .board {
+    grid-template-columns: 1fr;
+  }
+
+  .payment-modal__box {
+    padding: 1.75rem 1.25rem;
+  }
+
+  .payment-modal__actions {
+    flex-direction: column;
+  }
+}

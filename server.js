@@ -47,16 +47,49 @@ app.post("/api/orders", (req, res) => {
     return res.status(400).json({ error: "Geçerli ürün yok." });
   }
 
+  const orders = readOrders();
+  const tableStr = String(table).trim();
+
+  // Aynı masanın aktif (done olmayan) siparişini bul
+  const existingIdx = orders.findIndex(
+    (o) => String(o.table).trim() === tableStr && o.status !== "done"
+  );
+
+  if (existingIdx !== -1) {
+    // Mevcut siparişe yeni ürünleri ekle
+    const existing = orders[existingIdx];
+    cleanItems.forEach((newItem) => {
+      // Aynı isimde ürün varsa miktarını artır
+      const sameIdx = existing.items.findIndex((i) => i.name === newItem.name);
+      if (sameIdx !== -1) {
+        existing.items[sameIdx].qty += newItem.qty;
+      } else {
+        existing.items.push(newItem);
+      }
+    });
+    // Not varsa ekle / güncelle
+    if (note && String(note).trim()) {
+      const newNote = String(note).trim().slice(0, 200);
+      existing.note = existing.note
+        ? `${existing.note} | ${newNote}`
+        : newNote;
+    }
+    existing.status = "new"; // Yeni ürün geldi bildirimi
+    existing.updatedAt = new Date().toISOString();
+    writeOrders(orders);
+    return res.status(200).json(existing);
+  }
+
+  // Aktif sipariş yok → yeni sipariş oluştur
   const order = {
     id: `ord_${Date.now()}_${Math.random().toString(36).slice(2, 7)}`,
-    table: String(table).trim(),
+    table: tableStr,
     items: cleanItems,
     note: note ? String(note).trim().slice(0, 200) : "",
     status: "new",
     createdAt: new Date().toISOString(),
   };
 
-  const orders = readOrders();
   orders.push(order);
   writeOrders(orders);
 
