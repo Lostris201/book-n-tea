@@ -732,7 +732,6 @@ ul, ol {
   padding: 1.5rem;
   box-shadow: var(--shadow-card);
   transition: box-shadow var(--transition-fast);
-  margin-right: 250px;
 }
 
 .admin-card:hover {
@@ -1167,8 +1166,15 @@ ul, ol {
 .phone-card-wrap {
   width: 100%;
   max-width: 360px;
-  margin-right: 300px;
-  padding-left: 50px;
+  margin-right: 300px; /* desktop */
+  padding-left: 50px; /* desktop */
+}
+
+@media (max-width: 480px) {
+  .phone-card-wrap {
+    margin-right: 0;
+    padding-left: 0;
+  }
 }
 
 .phone-mockup {
