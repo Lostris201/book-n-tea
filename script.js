@@ -234,7 +234,23 @@ const MENU_DATA = [
 ];
 
 // 2. Global Application State
-// Admin panelinden kaydedilen veriyi yükle, yoksa MENU_DATA'yı kullan
+function mapAdminProducts(products) {
+  return products
+    .filter((p) => p.active !== false)
+    .map((p) => ({
+      id: p.id,
+      name: p.name,
+      category: p.category,
+      price: Number(p.price) || 0,
+      desc: p.desc || '',
+      image: p.image || 'assets/hero.png',
+      bestseller: p.bestseller || false,
+      tags: p.tags || [],
+      tagLabels: buildTagLabels(p),
+      customizable: p.customizable || false,
+    }));
+}
+
 function loadMenuData() {
   try {
     const raw = localStorage.getItem('bnt_admin_data_v1');
@@ -242,26 +258,29 @@ function loadMenuData() {
     const adminData = JSON.parse(raw);
     if (!adminData.products || adminData.products.length === 0) return MENU_DATA;
 
-    // Sadece aktif ürünleri filtrele, script formatına dönüştür
-    const mapped = adminData.products
-      .filter((p) => p.active !== false)
-      .map((p) => ({
-        id: p.id,
-        name: p.name,
-        category: p.category,
-        price: Number(p.price) || 0,
-        desc: p.desc || '',
-        image: p.image || 'assets/hero.png',
-        bestseller: p.bestseller || false,
-        tags: p.tags || [],
-        tagLabels: buildTagLabels(p),
-        customizable: p.customizable || false,
-      }));
-
+    const mapped = mapAdminProducts(adminData.products);
     return mapped.length > 0 ? mapped : MENU_DATA;
   } catch (e) {
     console.warn('Admin veri yüklenemedi, varsayılan menü kullanılıyor.', e);
     return MENU_DATA;
+  }
+}
+
+async function fetchMenuFromServer() {
+  try {
+    const res = await fetch('/api/menu');
+    if (!res.ok) return;
+    const serverData = await res.json();
+    if (serverData && Array.isArray(serverData.products) && serverData.products.length > 0) {
+      localStorage.setItem('bnt_admin_data_v1', JSON.stringify(serverData));
+      const mapped = mapAdminProducts(serverData.products);
+      if (mapped.length > 0) {
+        state.menuData = mapped;
+        renderProducts();
+      }
+    }
+  } catch (e) {
+    // Çevrimdışıysa mevcut veriyi kullanmaya devam et
   }
 }
 
@@ -360,6 +379,9 @@ window.addEventListener("DOMContentLoaded", () => {
   initTableNumber();
   renderTableGridOptions();
   renderProducts();
+
+  // Sunucudan güncel menü verisini çek (Admin → Telefon senkronizasyonu)
+  fetchMenuFromServer();
 
   // Hide loader with smooth fade after loading assets
   setTimeout(() => {

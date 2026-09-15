@@ -297,6 +297,14 @@
 
     saveAll(data) {
       localStorage.setItem(STORAGE_KEY, JSON.stringify(data));
+      // Canlı sunucuya (Vercel) senkronize et - telefon ve tüm cihazlar anında görsün
+      try {
+        fetch('/api/menu', {
+          method: 'POST',
+          headers: { 'Content-Type': 'application/json' },
+          body: JSON.stringify(data),
+        }).catch(() => {});
+      } catch (e) {}
     },
 
     // --- Products ---
@@ -1572,6 +1580,17 @@
     } else {
       navigateTo('dashboard');
     }
+
+    // Sunucudaki son menü verilerini çek ve eşitle
+    fetch('/api/menu')
+      .then(res => res.ok ? res.json() : null)
+      .then(serverMenu => {
+        if (serverMenu && Array.isArray(serverMenu.products) && serverMenu.products.length > 0) {
+          localStorage.setItem(STORAGE_KEY, JSON.stringify(serverMenu));
+          refreshAllViews();
+        }
+      })
+      .catch(() => {});
   });
 
 })();

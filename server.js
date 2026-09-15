@@ -4,17 +4,76 @@ const path = require("path");
 
 const app = express();
 const PORT = process.env.PORT || 3000;
+const ORDERS_FILE = process.env.VERCEL ? "/tmp/orders.json" : path.join(__dirname, "orders.json");
+const MENU_FILE = process.env.VERCEL ? "/tmp/menu.json" : path.join(__dirname, "menu.json");
+
 let ordersMemory = [];
+let menuMemory = null;
 
 function readOrders() {
+  try {
+    if (fs.existsSync(ORDERS_FILE)) {
+      const raw = fs.readFileSync(ORDERS_FILE, "utf8");
+      const parsed = JSON.parse(raw);
+      if (Array.isArray(parsed)) return parsed;
+    }
+  } catch (e) {}
   return ordersMemory;
 }
 
 function writeOrders(orders) {
   ordersMemory = orders;
+  try {
+    fs.writeFileSync(ORDERS_FILE, JSON.stringify(orders, null, 2), "utf8");
+  } catch (e) {}
 }
 
-app.use(express.json());
+function readMenu() {
+  if (menuMemory) return menuMemory;
+  try {
+    if (fs.existsSync(MENU_FILE)) {
+      const raw = fs.readFileSync(MENU_FILE, "utf8");
+      menuMemory = JSON.parse(raw);
+      return menuMemory;
+    }
+  } catch (e) {}
+  return null;
+}
+
+function writeMenu(data) {
+  menuMemory = data;
+  try {
+    fs.writeFileSync(MENU_FILE, JSON.stringify(data, null, 2), "utf8");
+  } catch (e) {}
+}
+
+app.use(express.json({ limit: "5mb" }));
+
+// CORS headers for local/cross-origin/mobile requests
+app.use((req, res, next) => {
+  res.setHeader("Access-Control-Allow-Origin", "*");
+  res.setHeader("Access-Control-Allow-Methods", "GET, POST, PATCH, DELETE, OPTIONS");
+  res.setHeader("Access-Control-Allow-Headers", "Content-Type, Authorization");
+  if (req.method === "OPTIONS") {
+    return res.sendStatus(200);
+  }
+  next();
+});
+
+// Menü API (Admin <-> Mobil QR Menü Senkronizasyonu)
+app.get("/api/menu", (req, res) => {
+  const menu = readMenu();
+  res.json(menu || { products: [] });
+});
+
+app.post("/api/menu", (req, res) => {
+  const data = req.body;
+  if (!data || !Array.isArray(data.products)) {
+    return res.status(400).json({ error: "Geçersiz menü verisi." });
+  }
+  writeMenu(data);
+  res.json({ success: true, count: data.products.length });
+});
 
 app.get("/api/orders", (req, res) => {
   const status = req.query.status;

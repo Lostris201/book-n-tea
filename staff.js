@@ -248,32 +248,34 @@ function closePaymentModal() {
   pendingCloseOrderId = null;
 }
 
-paymentModalCancel.addEventListener("click", closePaymentModal);
-paymentModalBackdrop.addEventListener("click", closePaymentModal);
+if (paymentModalCancel) paymentModalCancel.addEventListener("click", closePaymentModal);
+if (paymentModalBackdrop) paymentModalBackdrop.addEventListener("click", closePaymentModal);
 
-paymentModalConfirm.addEventListener("click", async () => {
-  if (!pendingCloseOrderId) return;
+if (paymentModalConfirm) {
+  paymentModalConfirm.addEventListener("click", async () => {
+    if (!pendingCloseOrderId) return;
 
-  const id = pendingCloseOrderId;
-  paymentModalConfirm.disabled = true;
-  paymentModalConfirm.textContent = "Kapatılıyor...";
+    const id = pendingCloseOrderId;
+    paymentModalConfirm.disabled = true;
+    paymentModalConfirm.textContent = "Kapatılıyor...";
 
-  try {
-    const res = await fetch(`/api/orders/${id}`, {
-      method: "PATCH",
-      headers: { "Content-Type": "application/json" },
-      body: JSON.stringify({ status: "done" }),
-    });
-    if (!res.ok) throw new Error("güncellenemedi");
-    closePaymentModal();
-    await fetchOrders();
-  } catch {
-    paymentModalConfirm.textContent = "Hata! Tekrar Dene";
-  } finally {
-    paymentModalConfirm.disabled = false;
-    paymentModalConfirm.textContent = "✓ Ödeme Alındı, Kapat";
-  }
-});
+    try {
+      const res = await fetch(`/api/orders/${id}`, {
+        method: "PATCH",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({ status: "done" }),
+      });
+      if (!res.ok) throw new Error("güncellenemedi");
+      closePaymentModal();
+      await fetchOrders();
+    } catch {
+      paymentModalConfirm.textContent = "Hata! Tekrar Dene";
+    } finally {
+      paymentModalConfirm.disabled = false;
+      paymentModalConfirm.textContent = "✓ Ödeme Alındı, Kapat";
+    }
+  });
+}
 
 /* --------------------------------------------------------------------------
    Yardımcı fonksiyonlar

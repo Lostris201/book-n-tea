@@ -348,6 +348,8 @@ ul, ol {
 .admin-layout {
   display: flex;
   min-height: 100vh;
+  width: 100%;
+  overflow-x: hidden;
   position: relative;
 }
 
@@ -583,10 +585,12 @@ ul, ol {
 /* Main Content Wrapper */
 .main-wrapper {
   flex: 1;
+  min-width: 0;
   margin-left: var(--sidebar-width);
   min-height: 100vh;
   display: flex;
   flex-direction: column;
+  overflow-x: hidden;
 }
 
 /* Top Navbar */
