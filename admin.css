@@ -2091,14 +2091,18 @@ ul, ol {
    ========================================================================== */
 @media (max-width: 450px) {
   .dashboard-grid {
-    grid-template-columns: 1fr;
-    justify-items: stretch;
+    grid-template-columns: 1fr !important;
     width: 100%;
   }
   .dashboard-main-col {
     width: 100%;
     max-width: 100%;
-    align-items: stretch;
+  }
+  .dashboard-main-col .admin-card {
+    width: calc(100% - 1rem) !important;
+    max-width: none !important;
+    margin-left: auto !important;
+    margin-right: auto !important;
   }
   .phone-preview-container {
     position: static;
@@ -2108,12 +2112,10 @@ ul, ol {
     margin-right: 0;
   }
   .phone-card-wrap {
-    width: 100%;
-    max-width: 100%;
-    display: flex;
-    justify-content: center;
-    margin-left: 0;
-    margin-right: 0;
+    width: calc(100% - 1rem) !important;
+    max-width: none !important;
+    margin-left: auto !important;
+    margin-right: auto !important;
   }
 }
 
@@ -2208,21 +2210,19 @@ ul, ol {
 
   /* Dashboard */
   .dashboard-grid {
-    grid-template-columns: 1fr;
-    justify-items: stretch;
+    grid-template-columns: 1fr !important;
     width: 100%;
   }
   .dashboard-main-col {
     gap: 1.25rem;
     width: 100%;
     max-width: 100%;
-    align-items: stretch;
   }
   .dashboard-main-col .admin-card {
-    width: 100%;
-    max-width: 100%;
-    margin-left: 0;
-    margin-right: 0;
+    width: calc(100% - 1.5rem) !important;
+    max-width: none !important;
+    margin-left: auto !important;
+    margin-right: auto !important;
     box-sizing: border-box;
   }
   .dashboard-tables-summary {
@@ -2235,16 +2235,17 @@ ul, ol {
     margin-right: 0;
   }
   .phone-card-wrap {
-    width: 100%;
-    max-width: 100%;
-    margin-left: 0;
-    margin-right: 0;
+    width: calc(100% - 1.5rem) !important;
+    max-width: none !important;
+    margin-left: auto !important;
+    margin-right: auto !important;
   }
   .phone-mockup {
     height: 520px;
     border-radius: 36px;
     padding: 8px;
-    max-width: 400px;
+    width: 100%;
+    max-width: 100%;
   }
   .phone-screen {
     border-radius: 28px;
@@ -2401,13 +2402,12 @@ ul, ol {
   .dashboard-main-col {
     max-width: 100%;
     width: 100%;
-    align-items: stretch;
   }
   .dashboard-main-col .admin-card {
-    width: 100%;
-    max-width: 100%;
-    margin-left: 0;
-    margin-right: 0;
+    width: calc(100% - 1rem) !important;
+    max-width: none !important;
+    margin-left: auto !important;
+    margin-right: auto !important;
   }
   .dashboard-tables-summary {
     grid-template-columns: repeat(3, 1fr);
@@ -2417,6 +2417,12 @@ ul, ol {
     width: 100%;
     margin-left: 0;
     margin-right: 0;
+  }
+  .phone-card-wrap {
+    width: calc(100% - 1rem) !important;
+    max-width: none !important;
+    margin-left: auto !important;
+    margin-right: auto !important;
   }
   .card-header-clean {
     flex-direction: column;
