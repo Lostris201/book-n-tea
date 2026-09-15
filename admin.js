@@ -283,10 +283,19 @@
           return INITIAL_SEED;
         }
         const parsed = JSON.parse(raw);
+        // Ensure critical arrays/objects exist to prevent undefined.sort() crashes
+        if (!Array.isArray(parsed.products)) parsed.products = [];
+        if (!Array.isArray(parsed.categories)) parsed.categories = INITIAL_SEED.categories;
+        if (!parsed.options || typeof parsed.options !== 'object') parsed.options = INITIAL_SEED.options;
+        if (!parsed.options.milk) parsed.options.milk = [];
+        if (!parsed.options.sugar) parsed.options.sugar = [];
+        if (!parsed.options.extras) parsed.options.extras = [];
+        if (!parsed.productOptionMappings || typeof parsed.productOptionMappings !== 'object') {
+          parsed.productOptionMappings = INITIAL_SEED.productOptionMappings;
+        }
         // Ensure 12 tables format integrity
         if (!parsed.tables || parsed.tables.length !== 12) {
           parsed.tables = INITIAL_SEED.tables;
-          this.saveAll(parsed);
         }
         return parsed;
       } catch (err) {
@@ -294,6 +303,7 @@
         return INITIAL_SEED;
       }
     },
+
 
     saveAll(data) {
       localStorage.setItem(STORAGE_KEY, JSON.stringify(data));
@@ -1197,11 +1207,24 @@
       const prodId = mappingProductSelect.value;
       if (!prodId) return;
 
+      const milkChecked = mapMilkCheck.checked;
+      const sugarChecked = mapSugarCheck.checked;
+      const extrasChecked = mapExtrasCheck.checked;
+
       DataStore.saveProductOptionMapping(prodId, {
-        milk: mapMilkCheck.checked,
-        sugar: mapSugarCheck.checked,
-        extras: mapExtrasCheck.checked
+        milk: milkChecked,
+        sugar: sugarChecked,
+        extras: extrasChecked
       });
+
+      // Ürünün customizable bayrağını güncelle (herhangi bir seçenek aktifse true)
+      const isCustomizable = milkChecked || sugarChecked || extrasChecked;
+      const data = DataStore.load();
+      const product = data.products.find(p => p.id === prodId);
+      if (product) {
+        product.customizable = isCustomizable;
+        DataStore.saveAll(data);
+      }
 
       showToast('Ürün seçenek eşleştirmesi kaydedildi.', 'success');
     });

@@ -234,21 +234,27 @@ const MENU_DATA = [
 ];
 
 // 2. Global Application State
-function mapAdminProducts(products) {
+function mapAdminProducts(products, productOptionMappings) {
+  const mappings = productOptionMappings || {};
   return products
     .filter((p) => p.active !== false)
-    .map((p) => ({
-      id: p.id,
-      name: p.name,
-      category: p.category,
-      price: Number(p.price) || 0,
-      desc: p.desc || '',
-      image: p.image || 'assets/hero.png',
-      bestseller: p.bestseller || false,
-      tags: p.tags || [],
-      tagLabels: buildTagLabels(p),
-      customizable: p.customizable || false,
-    }));
+    .map((p) => {
+      // Ürün customizable ise göster; ya ürün objesindeki bayrak, ya da mapping'ten kontrol et
+      const mapping = mappings[p.id] || {};
+      const isCustomizable = p.customizable || mapping.milk || mapping.sugar || mapping.extras || false;
+      return {
+        id: p.id,
+        name: p.name,
+        category: p.category,
+        price: Number(p.price) || 0,
+        desc: p.desc || '',
+        image: p.image || 'assets/hero.png',
+        bestseller: p.bestseller || false,
+        tags: p.tags || [],
+        tagLabels: buildTagLabels(p),
+        customizable: isCustomizable,
+      };
+    });
 }
 
 function loadMenuData() {
@@ -258,7 +264,7 @@ function loadMenuData() {
     const adminData = JSON.parse(raw);
     if (!adminData.products || adminData.products.length === 0) return MENU_DATA;
 
-    const mapped = mapAdminProducts(adminData.products);
+    const mapped = mapAdminProducts(adminData.products, adminData.productOptionMappings);
     return mapped.length > 0 ? mapped : MENU_DATA;
   } catch (e) {
     console.warn('Admin veri yüklenemedi, varsayılan menü kullanılıyor.', e);
@@ -273,7 +279,7 @@ async function fetchMenuFromServer() {
     const serverData = await res.json();
     if (serverData && Array.isArray(serverData.products) && serverData.products.length > 0) {
       localStorage.setItem('bnt_admin_data_v1', JSON.stringify(serverData));
-      const mapped = mapAdminProducts(serverData.products);
+      const mapped = mapAdminProducts(serverData.products, serverData.productOptionMappings);
       if (mapped.length > 0) {
         state.menuData = mapped;
         renderProducts();
@@ -283,6 +289,7 @@ async function fetchMenuFromServer() {
     // Çevrimdışıysa mevcut veriyi kullanmaya devam et
   }
 }
+
 
 // Admin'de tagLabels yoksa basit bir etiket seti oluştur
 function buildTagLabels(p) {
