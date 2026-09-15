@@ -1604,16 +1604,23 @@
       navigateTo('dashboard');
     }
 
-    // Sunucudaki son menü verilerini çek ve eşitle
+    // Sunucudaki son menü verilerini çek - sadece yerel veriden daha fazla/iyi ise uygula
     fetch('/api/menu')
       .then(res => res.ok ? res.json() : null)
       .then(serverMenu => {
-        if (serverMenu && Array.isArray(serverMenu.products) && serverMenu.products.length > 0) {
+        if (!serverMenu || !Array.isArray(serverMenu.products) || serverMenu.products.length === 0) return;
+        const localRaw = localStorage.getItem(STORAGE_KEY);
+        let localData = null;
+        try { localData = localRaw ? JSON.parse(localRaw) : null; } catch(e) {}
+        // Yerel veri yoksa veya sunucu verisi daha fazla ürüne sahipse uygula
+        const localCount = (localData && Array.isArray(localData.products)) ? localData.products.length : 0;
+        if (!localData || serverMenu.products.length > localCount) {
           localStorage.setItem(STORAGE_KEY, JSON.stringify(serverMenu));
           refreshAllViews();
         }
       })
       .catch(() => {});
+
   });
 
 })();
