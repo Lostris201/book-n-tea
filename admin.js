@@ -1040,10 +1040,14 @@
     }).join('');
   }
 
+  const btnSaveCategory = document.getElementById('btnSaveCategory');
+
   window.moveCategoryOrder = function (id, direction) {
     DataStore.moveCategory(id, direction);
     renderCategories();
     renderDashboard();
+    renderMenu();
+    renderPhoneMockup();
   };
 
   window.editCategory = function (id) {
@@ -1066,6 +1070,8 @@
         showToast(`"${name}" kategorisi silindi.`, 'success');
         renderCategories();
         renderDashboard();
+        renderMenu();
+        renderPhoneMockup();
       }
     );
   };
@@ -1079,28 +1085,40 @@
     });
   }
 
+  function handleSaveCategory() {
+    const id = categoryFormId.value;
+    const name = categoryFormName.value.trim();
+    const icon = categoryFormIcon.value.trim() || '☕';
+
+    if (!name) {
+      showToast('Kategori adı gerekli.', 'danger');
+      return;
+    }
+
+    DataStore.saveCategory({
+      id: id || undefined,
+      name,
+      icon
+    });
+
+    closeModal('categoryModal');
+    showToast(id ? 'Kategori güncellendi.' : 'Yeni kategori oluşturuldu.', 'success');
+    renderCategories();
+    renderDashboard();
+    renderMenu();
+    renderPhoneMockup();
+  }
+
   if (categoryForm) {
     categoryForm.addEventListener('submit', function (e) {
       e.preventDefault();
-      const id = categoryFormId.value;
-      const name = categoryFormName.value.trim();
-      const icon = categoryFormIcon.value.trim() || '☕';
+      handleSaveCategory();
+    });
+  }
 
-      if (!name) {
-        showToast('Kategori adı gerekli.', 'danger');
-        return;
-      }
-
-      DataStore.saveCategory({
-        id: id || undefined,
-        name,
-        icon
-      });
-
-      closeModal('categoryModal');
-      showToast(id ? 'Kategori güncellendi.' : 'Yeni kategori oluşturuldu.', 'success');
-      renderCategories();
-      renderDashboard();
+  if (btnSaveCategory) {
+    btnSaveCategory.addEventListener('click', function (e) {
+      handleSaveCategory();
     });
   }
 
@@ -1604,23 +1622,9 @@
       navigateTo('dashboard');
     }
 
-    // Sunucudaki son menü verilerini çek - sadece yerel veriden daha fazla/iyi ise uygula
-    fetch('/api/menu')
-      .then(res => res.ok ? res.json() : null)
-      .then(serverMenu => {
-        if (!serverMenu || !Array.isArray(serverMenu.products) || serverMenu.products.length === 0) return;
-        const localRaw = localStorage.getItem(STORAGE_KEY);
-        let localData = null;
-        try { localData = localRaw ? JSON.parse(localRaw) : null; } catch(e) {}
-        // Yerel veri yoksa veya sunucu verisi daha fazla ürüne sahipse uygula
-        const localCount = (localData && Array.isArray(localData.products)) ? localData.products.length : 0;
-        if (!localData || serverMenu.products.length > localCount) {
-          localStorage.setItem(STORAGE_KEY, JSON.stringify(serverMenu));
-          refreshAllViews();
-        }
-      })
-      .catch(() => {});
-
+    // NOT: Sunucu verisi Vercel'de geçici (/tmp) olduğundan LocalStorage'ı ezmiyoruz.
+    // Tüm değişiklikler LocalStorage'da tutulur; saveAll() sunucuya da yazar (müşteri menüsü için).
   });
 
 })();
+

@@ -257,32 +257,60 @@ function mapAdminProducts(products, productOptionMappings) {
     });
 }
 
-function loadMenuData() {
+const DEFAULT_CATEGORIES = [
+  { id: "tea", name: "Özel Çaylar", icon: "🍃" },
+  { id: "coffee", name: "Kahve Sanatı", icon: "☕" },
+  { id: "bakery", name: "Kütüphane Fırını", icon: "🥐" },
+  { id: "dessert", name: "Tatlılar", icon: "🍰" },
+  { id: "sandwich", name: "Sandviç & Tost", icon: "🥪" },
+  { id: "books", name: "Kitap & Merch", icon: "📚" }
+];
+
+function getInitialAdminData() {
   try {
     const raw = localStorage.getItem('bnt_admin_data_v1');
-    if (!raw) return MENU_DATA;
-    const adminData = JSON.parse(raw);
-    if (!adminData.products || adminData.products.length === 0) return MENU_DATA;
-
-    const mapped = mapAdminProducts(adminData.products, adminData.productOptionMappings);
-    return mapped.length > 0 ? mapped : MENU_DATA;
+    if (!raw) return { products: MENU_DATA, categories: DEFAULT_CATEGORIES, options: null, mappings: {} };
+    const parsed = JSON.parse(raw);
+    const categories = (Array.isArray(parsed.categories) && parsed.categories.length > 0)
+      ? parsed.categories.slice().sort((a, b) => (a.order || 0) - (b.order || 0))
+      : DEFAULT_CATEGORIES;
+    const mappings = parsed.productOptionMappings || {};
+    const options = parsed.options || null;
+    let products = MENU_DATA;
+    if (Array.isArray(parsed.products) && parsed.products.length > 0) {
+      const mapped = mapAdminProducts(parsed.products, mappings);
+      if (mapped.length > 0) products = mapped;
+    }
+    return { products, categories, options, mappings };
   } catch (e) {
-    console.warn('Admin veri yüklenemedi, varsayılan menü kullanılıyor.', e);
-    return MENU_DATA;
+    return { products: MENU_DATA, categories: DEFAULT_CATEGORIES, options: null, mappings: {} };
   }
 }
+
+const initialAdminData = getInitialAdminData();
 
 async function fetchMenuFromServer() {
   try {
     const res = await fetch('/api/menu');
     if (!res.ok) return;
     const serverData = await res.json();
-    if (serverData && Array.isArray(serverData.products) && serverData.products.length > 0) {
-      localStorage.setItem('bnt_admin_data_v1', JSON.stringify(serverData));
-      const mapped = mapAdminProducts(serverData.products, serverData.productOptionMappings);
-      if (mapped.length > 0) {
-        state.menuData = mapped;
-        renderProducts();
+    if (serverData) {
+      if (Array.isArray(serverData.categories) && serverData.categories.length > 0) {
+        state.categories = serverData.categories.slice().sort((a, b) => (a.order || 0) - (b.order || 0));
+        renderCategoriesNav();
+      }
+      if (serverData.options) {
+        state.options = serverData.options;
+      }
+      if (serverData.productOptionMappings) {
+        state.productOptionMappings = serverData.productOptionMappings;
+      }
+      if (Array.isArray(serverData.products) && serverData.products.length > 0) {
+        const mapped = mapAdminProducts(serverData.products, serverData.productOptionMappings);
+        if (mapped.length > 0) {
+          state.menuData = mapped;
+          renderProducts();
+        }
       }
     }
   } catch (e) {
@@ -290,6 +318,37 @@ async function fetchMenuFromServer() {
   }
 }
 
+// Dynamic Category Navigation Bar
+function renderCategoriesNav() {
+  const scroll = document.getElementById("categoriesScroll");
+  if (!scroll) return;
+
+  const cats = (state.categories && state.categories.length > 0) ? state.categories : DEFAULT_CATEGORIES;
+
+  // If current category no longer exists and isn't 'all', reset to 'all'
+  if (state.currentCategory !== "all" && !cats.some(c => c.id === state.currentCategory)) {
+    state.currentCategory = "all";
+  }
+
+  let html = `
+    <button class="cat-pill ${state.currentCategory === 'all' ? 'is-active' : ''}" data-cat="all" type="button">
+      <span class="cat-pill__icon">✨</span>
+      <span class="cat-pill__title">Tümü</span>
+    </button>
+  `;
+
+  cats.forEach((cat) => {
+    const isActive = state.currentCategory === cat.id ? "is-active" : "";
+    html += `
+      <button class="cat-pill ${isActive}" data-cat="${escapeHtml(cat.id)}" type="button">
+        <span class="cat-pill__icon">${escapeHtml(cat.icon || "☕")}</span>
+        <span class="cat-pill__title">${escapeHtml(cat.name)}</span>
+      </button>
+    `;
+  });
+
+  scroll.innerHTML = html;
+}
 
 // Admin'de tagLabels yoksa basit bir etiket seti oluştur
 function buildTagLabels(p) {
@@ -309,7 +368,10 @@ const state = {
   selectedProductForCustom: null,
   customQty: 1,
   activeOrder: null,
-  menuData: loadMenuData(), // Admin panelinden senkronize edilmiş menü
+  categories: initialAdminData.categories,
+  options: initialAdminData.options,
+  productOptionMappings: initialAdminData.mappings,
+  menuData: initialAdminData.products, // Admin panelinden senkronize edilmiş menü
 };
 
 
@@ -385,6 +447,7 @@ let toastTimer = null;
 window.addEventListener("DOMContentLoaded", () => {
   initTableNumber();
   renderTableGridOptions();
+  renderCategoriesNav();
   renderProducts();
 
   // Sunucudan güncel menü verisini çek (Admin → Telefon senkronizasyonu)
@@ -597,8 +660,45 @@ function openCustomizationModal(product) {
   customModalPrice.textContent = `${product.price} ₺`;
   customQtyVal.textContent = "1";
 
-  // Hide or show milk choices
-  milkOptionGroup.hidden = !product.category.includes("tea") && !product.category.includes("coffee");
+  // Check mappings: if mapping exists for product, use it. Otherwise fallback to tea/coffee detection
+  const mappings = state.productOptionMappings || {};
+  const mapping = mappings[product.id] || null;
+  const isTeaOrCoffee = (product.category === "tea" || product.category === "coffee" || (product.category && (product.category.includes("tea") || product.category.includes("coffee"))));
+
+  const showMilk = mapping ? !!mapping.milk : isTeaOrCoffee;
+  const showSugar = mapping ? !!mapping.sugar : isTeaOrCoffee;
+
+  if (milkOptionGroup) milkOptionGroup.hidden = !showMilk;
+  const sugarGroup = document.getElementById("sugarOptionGroup");
+  if (sugarGroup) sugarGroup.hidden = !showSugar;
+
+  // Render options dynamically from state.options if available
+  if (state.options && Array.isArray(state.options.milk) && state.options.milk.length > 0 && milkOptionGroup) {
+    const milkContainer = milkOptionGroup.querySelector(".custom-group__options");
+    if (milkContainer) {
+      milkContainer.innerHTML = state.options.milk.map((m, idx) => `
+        <label class="opt-btn">
+          <input type="radio" name="milkOpt" value="${escapeHtml(m.name)}${m.price > 0 ? ` (+${m.price} ₺)` : ''}" ${m.price > 0 ? `data-extra="${m.price}"` : ''} ${idx === 0 ? 'checked' : ''} />
+          <span>${escapeHtml(m.name)}${m.price > 0 ? ` (+${m.price} ₺)` : ''}</span>
+        </label>
+      `).join('');
+      milkContainer.querySelectorAll('input[name="milkOpt"]').forEach((r) => {
+        r.addEventListener("change", updateCustomModalTotal);
+      });
+    }
+  }
+
+  if (state.options && Array.isArray(state.options.sugar) && state.options.sugar.length > 0 && sugarGroup) {
+    const sugarContainer = sugarGroup.querySelector(".custom-group__options");
+    if (sugarContainer) {
+      sugarContainer.innerHTML = state.options.sugar.map((s, idx) => `
+        <label class="opt-btn">
+          <input type="radio" name="sugarOpt" value="${escapeHtml(s.name)}${s.price > 0 ? ` (+${s.price} ₺)` : ''}" ${s.price > 0 ? `data-extra="${s.price}"` : ''} ${idx === 0 ? 'checked' : ''} />
+          <span>${escapeHtml(s.name)}${s.price > 0 ? ` (+${s.price} ₺)` : ''}</span>
+        </label>
+      `).join('');
+    }
+  }
 
   updateCustomModalTotal();
   customModal.hidden = false;
