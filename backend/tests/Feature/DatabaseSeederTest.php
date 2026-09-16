@@ -20,7 +20,11 @@ class DatabaseSeederTest extends TestCase
 {
     use RefreshDatabase;
 
-    protected $seed = true;
+    protected function setUp(): void
+    {
+        parent::setUp();
+        $this->seed();
+    }
 
     public function test_seeds_twelve_active_tables_with_unique_tokens(): void
     {

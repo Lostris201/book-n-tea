@@ -87,11 +87,40 @@ filters.forEach((btn) => {
 });
 
 /* --------------------------------------------------------------------------
+   API: Oturumlu istek (401 → giriş iste, bir kez tekrar dene)
+   -------------------------------------------------------------------------- */
+let loginDeclined = false;
+
+async function apiFetch(path, options = {}) {
+  const send = () =>
+    fetch(bntApiUrl(path), {
+      ...options,
+      headers: { ...(options.headers || {}), ...bntAuthHeaders() },
+    });
+
+  let res = await send();
+  if (res.status === 401 && !loginDeclined) {
+    bntSetToken("");
+    if (await bntLogin()) {
+      res = await send();
+    } else {
+      loginDeclined = true;
+    }
+  }
+  return res;
+}
+
+/* --------------------------------------------------------------------------
    API: Siparişleri çek
    -------------------------------------------------------------------------- */
 async function fetchOrders() {
   try {
-    const res = await fetch("/api/orders");
+    const res = await apiFetch("/api/orders");
+    if (res.status === 401 || res.status === 403) {
+      emptyState.textContent = "Siparişleri görmek için giriş yapın. (Sayfayı yenileyin)";
+      emptyState.hidden = false;
+      return;
+    }
     if (!res.ok) throw new Error("okunamadı");
     orders = await res.json();
 
@@ -215,7 +244,7 @@ board.addEventListener("click", async (e) => {
 
     statusBtn.disabled = true;
     try {
-      const res = await fetch(`/api/orders/${id}`, {
+      const res = await apiFetch(`/api/orders/${id}`, {
         method: "PATCH",
         headers: { "Content-Type": "application/json" },
         body: JSON.stringify({ status }),
@@ -267,7 +296,7 @@ if (paymentModalConfirm) {
     paymentModalConfirm.textContent = "Kapatılıyor...";
 
     try {
-      const res = await fetch(`/api/orders/${id}`, {
+      const res = await apiFetch(`/api/orders/${id}`, {
         method: "PATCH",
         headers: { "Content-Type": "application/json" },
         body: JSON.stringify({ status: "done" }),

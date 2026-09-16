@@ -291,7 +291,7 @@ const initialAdminData = getInitialAdminData();
 
 async function fetchMenuFromServer() {
   try {
-    const res = await fetch('/api/menu');
+    const res = await fetch(bntApiUrl('/api/menu'));
     if (!res.ok) return;
     const serverData = await res.json();
     if (serverData) {
@@ -923,7 +923,7 @@ submitOrderBtn.addEventListener("click", async () => {
   cartErrorMsg.hidden = true;
 
   try {
-    const res = await fetch("/api/orders", {
+    const res = await fetch(bntApiUrl("/api/orders"), {
       method: "POST",
       headers: { "Content-Type": "application/json" },
       body: JSON.stringify({
@@ -1049,7 +1049,7 @@ waiterModal.querySelectorAll(".waiter-option-btn").forEach((btn) => {
 
     // Submit notification to orders API as service request
     try {
-      await fetch("/api/orders", {
+      await fetch(bntApiUrl("/api/orders"), {
         method: "POST",
         headers: { "Content-Type": "application/json" },
         body: JSON.stringify({

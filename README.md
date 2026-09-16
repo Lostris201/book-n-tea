@@ -29,6 +29,23 @@ php artisan serve           # http://localhost:8000
 
 Tests: `php artisan test`
 
+Local dev logins (seeded only when `APP_ENV=local`): `admin@bookntea.test`, `manager@bookntea.test`,
+`staff@bookntea.test` — password `password`.
+
+### API (legacy-compatible, Phase 2)
+
+| Method | Path | Auth |
+|---|---|---|
+| POST | `/api/auth/login` `{email, password}` → `{token}` | public (5/min) |
+| GET | `/api/auth/me`, POST `/api/auth/logout` | Bearer token |
+| GET | `/api/menu` | public |
+| POST | `/api/menu` (legacy admin blob) | admin |
+| POST | `/api/orders` `{table, items:[{name, price, qty}], note}` | public |
+| GET | `/api/orders[?status=]` | staff / manager / admin |
+| PATCH | `/api/orders/{id}` `{status}` | staff / manager / admin |
+
+Errors are always `{ "error": "Türkçe mesaj" }`. Cross-origin browser access is limited to `CORS_ALLOWED_ORIGINS`.
+
 ## Frontend (Next.js)
 
 ```bash
@@ -47,6 +64,10 @@ npm start                   # http://localhost:3000 (use PORT=3001 if Next.js is
 ```
 
 Pages: `index.html?masa=N` (menu), `staff.html`, `admin.html`, `qr.html`.
+
+To run the legacy pages against Laravel instead of `server.js`, set `window.BNT_API_BASE = "http://localhost:8000"`
+in `legacy/config.js` and add the legacy origin (e.g. `http://localhost:3001`) to `CORS_ALLOWED_ORIGINS` in
+`backend/.env`. The staff board then asks for a staff login (browser prompt) and stores the token in localStorage.
 
 ## Secrets
 

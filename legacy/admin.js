@@ -309,9 +309,9 @@
       localStorage.setItem(STORAGE_KEY, JSON.stringify(data));
       // Canlı sunucuya (Vercel) senkronize et - telefon ve tüm cihazlar anında görsün
       try {
-        fetch('/api/menu', {
+        fetch(bntApiUrl('/api/menu'), {
           method: 'POST',
-          headers: { 'Content-Type': 'application/json' },
+          headers: Object.assign({ 'Content-Type': 'application/json' }, bntAuthHeaders()),
           body: JSON.stringify(data),
         }).catch(() => {});
       } catch (e) {}
