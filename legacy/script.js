@@ -361,6 +361,8 @@ function buildTagLabels(p) {
 
 const state = {
   tableNumber: "04",
+  tableToken: null, // QR token (?t=) — when set, the table cannot be changed from the UI
+  tableTokenValid: null,
   cart: new Map(), // key: unique item id or string, val: item object
   currentCategory: "all",
   currentTag: "all",
@@ -459,14 +461,37 @@ window.addEventListener("DOMContentLoaded", () => {
   }, 1000);
 });
 
-// Parse Table number from URL query string ?masa= or ?table=
+// Parse table from URL: ?t=<qr_token> (Laravel) or legacy ?masa= / ?table= (node server.js)
 function initTableNumber() {
   const params = new URLSearchParams(window.location.search);
+  const token = params.get("t");
   const masa = params.get("masa") || params.get("table");
+
+  if (token) {
+    state.tableToken = token;
+    state.tableNumber = "--";
+    updateTableDisplay();
+    resolveTableToken(token);
+    return;
+  }
+
   if (masa && /^\d+$/.test(masa)) {
     state.tableNumber = masa.padStart(2, "0");
   } else {
     state.tableNumber = "04"; // Default demonstration table
+  }
+  updateTableDisplay();
+}
+
+async function resolveTableToken(token) {
+  try {
+    const res = await fetch(bntApiUrl(`/api/tables/resolve?t=${encodeURIComponent(token)}`));
+    if (!res.ok) throw new Error("invalid");
+    const table = await res.json();
+    state.tableNumber = String(table.number).padStart(2, "0");
+    state.tableTokenValid = true;
+  } catch {
+    state.tableTokenValid = false;
   }
   updateTableDisplay();
 }
@@ -678,7 +703,7 @@ function openCustomizationModal(product) {
     if (milkContainer) {
       milkContainer.innerHTML = state.options.milk.map((m, idx) => `
         <label class="opt-btn">
-          <input type="radio" name="milkOpt" value="${escapeHtml(m.name)}${m.price > 0 ? ` (+${m.price} ₺)` : ''}" ${m.price > 0 ? `data-extra="${m.price}"` : ''} ${idx === 0 ? 'checked' : ''} />
+          <input type="radio" name="milkOpt" value="${escapeHtml(m.name)}${m.price > 0 ? ` (+${m.price} ₺)` : ''}" data-option-id="${escapeHtml(m.id || '')}" ${m.price > 0 ? `data-extra="${m.price}"` : ''} ${idx === 0 ? 'checked' : ''} />
           <span>${escapeHtml(m.name)}${m.price > 0 ? ` (+${m.price} ₺)` : ''}</span>
         </label>
       `).join('');
@@ -693,7 +718,7 @@ function openCustomizationModal(product) {
     if (sugarContainer) {
       sugarContainer.innerHTML = state.options.sugar.map((s, idx) => `
         <label class="opt-btn">
-          <input type="radio" name="sugarOpt" value="${escapeHtml(s.name)}${s.price > 0 ? ` (+${s.price} ₺)` : ''}" ${s.price > 0 ? `data-extra="${s.price}"` : ''} ${idx === 0 ? 'checked' : ''} />
+          <input type="radio" name="sugarOpt" value="${escapeHtml(s.name)}${s.price > 0 ? ` (+${s.price} ₺)` : ''}" data-option-id="${escapeHtml(s.id || '')}" ${s.price > 0 ? `data-extra="${s.price}"` : ''} ${idx === 0 ? 'checked' : ''} />
           <span>${escapeHtml(s.name)}${s.price > 0 ? ` (+${s.price} ₺)` : ''}</span>
         </label>
       `).join('');
@@ -753,7 +778,14 @@ confirmCustomAddBtn.addEventListener("click", () => {
   const finalUnitPrice = p.price + extra;
   const optsSummary = [milkOpt, sugarOpt].filter(Boolean).join(", ");
 
-  addToCart(p.id, p.name, finalUnitPrice, state.customQty, optsSummary);
+  // Only options from visible groups; the server prices them.
+  const optionIds = ["milkOptionGroup", "sugarOptionGroup"]
+    .map((groupId) => document.getElementById(groupId))
+    .filter((group) => group && !group.hidden)
+    .map((group) => group.querySelector("input:checked")?.dataset.optionId)
+    .filter(Boolean);
+
+  addToCart(p.id, p.name, finalUnitPrice, state.customQty, optsSummary, optionIds);
   closeCustomModalFunc();
 });
 
@@ -766,7 +798,7 @@ closeCustomModal.addEventListener("click", closeCustomModalFunc);
 customBackdrop.addEventListener("click", closeCustomModalFunc);
 
 // 9. Cart Operations & Logic
-function addToCart(idOrObj, name, price, qty = 1, options = "") {
+function addToCart(idOrObj, name, price, qty = 1, options = "", optionIds = []) {
   let id, itemOptions = options;
   if (typeof idOrObj === "object" && idOrObj !== null) {
     id = idOrObj.id || idOrObj.key || "item";
@@ -793,6 +825,7 @@ function addToCart(idOrObj, name, price, qty = 1, options = "") {
       price,
       qty,
       options: itemOptions,
+      optionIds,
     });
   }
 
@@ -910,9 +943,18 @@ submitOrderBtn.addEventListener("click", async () => {
     return;
   }
 
+  if (state.tableToken && state.tableTokenValid === false) {
+    showCartError("Masa bulunamadı. Lütfen masanızdaki QR kodu tekrar okutun.");
+    return;
+  }
+
   const note = orderNoteInput.value.trim();
 
+  // Laravel reads table_token + product_id/option_ids and prices on the server.
+  // node server.js reads table + name/price. Both ignore the other's fields.
   const items = Array.from(state.cart.values()).map((item) => ({
+    product_id: item.id,
+    option_ids: item.optionIds || [],
     name: item.options ? `${item.name} (${item.options})` : item.name,
     price: item.price,
     qty: item.qty,
@@ -927,6 +969,7 @@ submitOrderBtn.addEventListener("click", async () => {
       method: "POST",
       headers: { "Content-Type": "application/json" },
       body: JSON.stringify({
+        table_token: state.tableToken || undefined,
         table: state.tableNumber,
         items,
         note,
@@ -992,6 +1035,8 @@ closeReceiptBtn.addEventListener("click", () => {
 
 // 13. Table Switcher Dialog
 tableBadgeBtn.addEventListener("click", () => {
+  // QR-token tables are fixed; switching tables would need another table's QR code.
+  if (state.tableToken) return;
   tableModal.hidden = false;
 });
 
@@ -1047,7 +1092,25 @@ waiterModal.querySelectorAll(".waiter-option-btn").forEach((btn) => {
     const reason = btn.dataset.reason;
     waiterModal.hidden = true;
 
-    // Submit notification to orders API as service request
+    // QR-token tables: dedicated waiter-call API (Laravel)
+    if (state.tableToken) {
+      try {
+        await fetch(bntApiUrl("/api/waiter-calls"), {
+          method: "POST",
+          headers: { "Content-Type": "application/json" },
+          body: JSON.stringify({
+            table_token: state.tableToken,
+            type: reason && reason.includes("Hesap") ? "bill" : "waiter",
+            reason,
+          }),
+        });
+      } catch (e) {
+        // Ignore background notification errors
+      }
+      return;
+    }
+
+    // Submit notification to orders API as service request (node server.js)
     try {
       await fetch(bntApiUrl("/api/orders"), {
         method: "POST",

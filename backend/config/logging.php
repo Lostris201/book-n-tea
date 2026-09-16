@@ -73,6 +73,15 @@ return [
             'replace_placeholders' => true,
         ],
 
+        // Failed logins, rate-limit hits, invalid table tokens, webhook signature failures.
+        'security' => [
+            'driver' => 'daily',
+            'path' => storage_path('logs/security.log'),
+            'level' => 'info',
+            'days' => 90,
+            'replace_placeholders' => true,
+        ],
+
         'slack' => [
             'driver' => 'slack',
             'url' => env('LOG_SLACK_WEBHOOK_URL'),

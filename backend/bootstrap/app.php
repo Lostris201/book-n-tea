@@ -1,5 +1,6 @@
 <?php
 
+use App\Exceptions\ApiException;
 use App\Http\Middleware\EnsureUserHasRole;
 use App\Http\Middleware\ForceJsonResponse;
 use Illuminate\Auth\Access\AuthorizationException;
@@ -31,6 +32,9 @@ return Application::configure(basePath: dirname(__DIR__))
         ]);
     })
     ->withExceptions(function (Exceptions $exceptions): void {
+        // Expected business-rule rejections, not application errors.
+        $exceptions->dontReport(ApiException::class);
+
         // API errors are always { "error": "Türkçe mesaj" } — the UI shows them directly.
         $exceptions->render(function (Throwable $e, Request $request) {
             if (! $request->is('api/*')) {
@@ -38,6 +42,7 @@ return Application::configure(basePath: dirname(__DIR__))
             }
 
             [$status, $message] = match (true) {
+                $e instanceof ApiException => [$e->status, $e->getMessage()],
                 $e instanceof AuthenticationException => [401, 'Bu işlem için giriş yapmanız gerekiyor.'],
                 $e instanceof AuthorizationException,
                 $e instanceof AccessDeniedHttpException => [403, 'Bu işlem için yetkiniz yok.'],

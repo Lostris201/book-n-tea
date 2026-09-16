@@ -7,6 +7,7 @@ use App\Models\User;
 use Illuminate\Http\JsonResponse;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\Hash;
+use Illuminate\Support\Facades\Log;
 
 /**
  * Token auth for staff/admin API clients (legacy staff board). The Next.js app will use
@@ -26,10 +27,17 @@ class AuthController extends Controller
         $user = User::where('email', $email)->first();
 
         if (! $user || ! Hash::check($password, $user->password)) {
+            Log::channel('security')->warning('Failed login', [
+                'ip' => $request->ip(),
+                'user_id' => $user?->id,
+            ]);
+
             return response()->json(['error' => 'E-posta veya şifre hatalı.'], 401);
         }
 
         if (! $user->is_active) {
+            Log::channel('security')->warning('Login attempt by inactive user', ['ip' => $request->ip(), 'user_id' => $user->id]);
+
             return response()->json(['error' => 'Hesabınız devre dışı.'], 403);
         }
 

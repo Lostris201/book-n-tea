@@ -32,19 +32,27 @@ Tests: `php artisan test`
 Local dev logins (seeded only when `APP_ENV=local`): `admin@bookntea.test`, `manager@bookntea.test`,
 `staff@bookntea.test` — password `password`.
 
-### API (legacy-compatible, Phase 2)
+### API
 
 | Method | Path | Auth |
 |---|---|---|
-| POST | `/api/auth/login` `{email, password}` → `{token}` | public (5/min) |
+| POST | `/api/auth/login` `{email, password}` → `{token}` | public (5/min per IP) |
 | GET | `/api/auth/me`, POST `/api/auth/logout` | Bearer token |
 | GET | `/api/menu` | public |
-| POST | `/api/menu` (legacy admin blob) | admin |
-| POST | `/api/orders` `{table, items:[{name, price, qty}], note}` | public |
+| POST | `/api/menu` (legacy admin blob, transitional) | admin |
+| GET | `/api/tables/resolve?t={qr_token}` → `{number, name}` | public (30/min per IP) |
+| GET | `/api/tables` (includes QR tokens) | admin / manager |
+| POST | `/api/orders` `{table_token, items:[{product_id, qty, option_ids}], note}` | public (10/min per IP and per table) |
 | GET | `/api/orders[?status=]` | staff / manager / admin |
 | PATCH | `/api/orders/{id}` `{status}` | staff / manager / admin |
+| POST | `/api/waiter-calls` `{table_token, type: waiter\|bill, reason?}` | public (10/min per IP and per table) |
+| GET | `/api/waiter-calls` (pending) | staff / manager / admin |
+| PATCH | `/api/waiter-calls/{id}` (resolve) | staff / manager / admin |
 
-Errors are always `{ "error": "Türkçe mesaj" }`. Cross-origin browser access is limited to `CORS_ALLOWED_ORIGINS`.
+- `product_id` / `option_ids` are the ids returned by `GET /api/menu`. Prices are always computed on the server;
+  any price the client sends is ignored.
+- Errors are always `{ "error": "Türkçe mesaj" }`. Cross-origin browser access is limited to `CORS_ALLOWED_ORIGINS`.
+- Failed logins, rate-limit hits and invalid table tokens go to `storage/logs/security-*.log` (kept 90 days).
 
 ## Frontend (Next.js)
 
@@ -68,6 +76,8 @@ Pages: `index.html?masa=N` (menu), `staff.html`, `admin.html`, `qr.html`.
 To run the legacy pages against Laravel instead of `server.js`, set `window.BNT_API_BASE = "http://localhost:8000"`
 in `legacy/config.js` and add the legacy origin (e.g. `http://localhost:3001`) to `CORS_ALLOWED_ORIGINS` in
 `backend/.env`. The staff board then asks for a staff login (browser prompt) and stores the token in localStorage.
+In Laravel mode, `qr.html` asks for an admin/manager login and prints `index.html?t={qr_token}` codes; the customer
+menu needs that `?t=` link (`?masa=N` only works with `server.js`).
 
 ## Secrets
 

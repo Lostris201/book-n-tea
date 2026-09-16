@@ -9,7 +9,7 @@ use Illuminate\Database\Eloquent\Relations\BelongsTo;
 
 class WaiterCall extends Model
 {
-    protected $fillable = ['cafe_table_id', 'type', 'resolved_at'];
+    protected $fillable = ['cafe_table_id', 'type', 'reason', 'resolved_at'];
 
     protected function casts(): array
     {

@@ -86,29 +86,7 @@ filters.forEach((btn) => {
   });
 });
 
-/* --------------------------------------------------------------------------
-   API: Oturumlu istek (401 → giriş iste, bir kez tekrar dene)
-   -------------------------------------------------------------------------- */
-let loginDeclined = false;
-
-async function apiFetch(path, options = {}) {
-  const send = () =>
-    fetch(bntApiUrl(path), {
-      ...options,
-      headers: { ...(options.headers || {}), ...bntAuthHeaders() },
-    });
-
-  let res = await send();
-  if (res.status === 401 && !loginDeclined) {
-    bntSetToken("");
-    if (await bntLogin()) {
-      res = await send();
-    } else {
-      loginDeclined = true;
-    }
-  }
-  return res;
-}
+const apiFetch = bntApiFetch;
 
 /* --------------------------------------------------------------------------
    API: Siparişleri çek
@@ -117,6 +95,7 @@ async function fetchOrders() {
   try {
     const res = await apiFetch("/api/orders");
     if (res.status === 401 || res.status === 403) {
+      lastRenderKey = "";
       emptyState.textContent = "Siparişleri görmek için giriş yapın. (Sayfayı yenileyin)";
       emptyState.hidden = false;
       return;
@@ -139,9 +118,64 @@ async function fetchOrders() {
 
     render();
   } catch {
+    lastRenderKey = "";
     emptyState.textContent = "Sunucuya bağlanılamadı.";
     emptyState.hidden = false;
   }
+}
+
+/* --------------------------------------------------------------------------
+   API: Garson çağrıları (Laravel; node server.js'de çağrılar sipariş olarak gelir)
+   -------------------------------------------------------------------------- */
+let waiterCalls = [];
+let seenCallIds = null;
+
+async function fetchWaiterCalls() {
+  try {
+    const res = await apiFetch("/api/waiter-calls");
+    if (!res.ok) return;
+    waiterCalls = await res.json();
+
+    const currentIds = waiterCalls.map((c) => `call_${c.id}`);
+    if (seenCallIds === null) {
+      seenCallIds = new Set(currentIds);
+    } else {
+      const newIds = currentIds.filter((id) => !seenCallIds.has(id));
+      if (newIds.length) {
+        playAlertTone();
+        newIds.forEach((id) => flashUntil.set(id, Date.now() + FLASH_DURATION_MS));
+      }
+      newIds.forEach((id) => seenCallIds.add(id));
+    }
+
+    render();
+  } catch {
+    // Çağrı listesi alınamazsa sipariş panosu çalışmaya devam eder.
+  }
+}
+
+function buildCallCard(call) {
+  const card = document.createElement("article");
+  card.className = "order is-new";
+  card.dataset.callId = call.id;
+  card.innerHTML = `
+    <div class="order__top">
+      <h2 class="order__table">Masa ${escapeHtml(call.table)}</h2>
+      <span class="order__time">${formatTime(call.createdAt)}</span>
+    </div>
+    <span class="order__status">${call.type === "bill" ? "Hesap İsteği" : "Garson Çağrısı"}</span>
+    ${call.reason ? `<ul class="order__items"><li><span>${escapeHtml(call.reason)}</span></li></ul>` : ""}
+    <div class="order__actions">
+      <button type="button" class="is-primary" data-action="resolve-call">Tamam</button>
+    </div>
+  `;
+
+  const flashExpiry = flashUntil.get(`call_${call.id}`);
+  if (flashExpiry) {
+    if (flashExpiry > Date.now()) card.classList.add("is-flash");
+    else flashUntil.delete(`call_${call.id}`);
+  }
+  return card;
 }
 
 /* --------------------------------------------------------------------------
@@ -156,7 +190,15 @@ function calcOrderTotal(order) {
 /* --------------------------------------------------------------------------
    Render: Sipariş kartlarını oluştur
    -------------------------------------------------------------------------- */
+// Polling runs every 2s; rebuilding identical cards would swallow taps on their buttons.
+let lastRenderKey = "";
+
 function render() {
+  const flashing = [...flashUntil.entries()].filter(([, until]) => until > Date.now()).map(([id]) => id);
+  const renderKey = JSON.stringify([currentFilter, orders, waiterCalls, flashing]);
+  if (renderKey === lastRenderKey) return;
+  lastRenderKey = renderKey;
+
   const visible =
     currentFilter === "all"
       ? orders
@@ -166,13 +208,17 @@ function render() {
 
   board.querySelectorAll(".order").forEach((el) => el.remove());
 
-  if (!visible.length) {
+  const visibleCalls = currentFilter === "all" || currentFilter === "new" ? waiterCalls : [];
+
+  if (!visible.length && !visibleCalls.length) {
     emptyState.hidden = false;
     emptyState.textContent = "Henüz sipariş yok.";
     return;
   }
 
   emptyState.hidden = true;
+
+  visibleCalls.forEach((call) => board.appendChild(buildCallCard(call)));
 
   visible.forEach((order) => {
     const card = document.createElement("article");
@@ -234,6 +280,22 @@ function render() {
    Board tıklama olayları
    -------------------------------------------------------------------------- */
 board.addEventListener("click", async (e) => {
+  // Garson çağrısı: Tamam
+  const resolveBtn = e.target.closest('[data-action="resolve-call"]');
+  if (resolveBtn) {
+    const id = resolveBtn.closest(".order")?.dataset.callId;
+    if (!id) return;
+    resolveBtn.disabled = true;
+    try {
+      const res = await apiFetch(`/api/waiter-calls/${id}`, { method: "PATCH" });
+      if (!res.ok) throw new Error("güncellenemedi");
+      await fetchWaiterCalls();
+    } catch {
+      resolveBtn.disabled = false;
+    }
+    return;
+  }
+
   // Durum değiştirme butonları: Hazırla / Hazır / Teslim
   const statusBtn = e.target.closest("button[data-status]");
   if (statusBtn) {
@@ -338,5 +400,10 @@ function escapeHtml(str) {
 /* --------------------------------------------------------------------------
    Başlat
    -------------------------------------------------------------------------- */
-fetchOrders();
-setInterval(fetchOrders, 2000);
+async function poll() {
+  await fetchOrders();
+  await fetchWaiterCalls();
+}
+
+poll();
+setInterval(poll, 2000);

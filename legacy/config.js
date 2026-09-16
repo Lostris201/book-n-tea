@@ -32,6 +32,27 @@ window.bntAuthHeaders = function () {
   return token ? { Authorization: `Bearer ${token}` } : {};
 };
 
+/* Oturumlu istek: 401 gelirse bir kez giriş ister ve tekrar dener. */
+let bntLoginDeclined = false;
+window.bntApiFetch = async function (path, options = {}) {
+  const send = () =>
+    fetch(window.bntApiUrl(path), {
+      ...options,
+      headers: { ...(options.headers || {}), ...window.bntAuthHeaders() },
+    });
+
+  let res = await send();
+  if (res.status === 401 && !bntLoginDeclined) {
+    window.bntSetToken("");
+    if (await window.bntLogin()) {
+      res = await send();
+    } else {
+      bntLoginDeclined = true;
+    }
+  }
+  return res;
+};
+
 /* 401 gelirse e-posta/şifre sorup oturum açar. Başarılıysa true döner. */
 let bntLoginPromise = null;
 window.bntLogin = function () {
