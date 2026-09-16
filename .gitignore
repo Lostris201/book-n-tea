@@ -1,11 +1,25 @@
-node_modules/
-data/orders.json
+# Secrets - every .env except the committed examples
 .env
-.env.local
-.vercel
-*.log
-.DS_Store
-.claude/
+.env.*
+!.env.example
 
+# Dependencies / build output
+node_modules/
+vendor/
+!legacy/vendor/
+.next/
+out/
+
+# Logs
+*.log
+
+# Legacy runtime data
+legacy/data/orders.json
+legacy/orders.json
+legacy/menu.json
+
+# Tooling
 .vercel
-.env*
+.DS_Store
+Thumbs.db
+.claude/
