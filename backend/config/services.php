@@ -35,4 +35,10 @@ return [
         ],
     ],
 
+    'frontend' => [
+        'url' => env('FRONTEND_URL'),
+        // Base of the customer menu link printed in table QR codes (the token is appended as ?t=).
+        'qr_menu_url' => env('QR_MENU_URL', env('FRONTEND_URL')),
+    ],
+
 ];

@@ -7,6 +7,7 @@ use App\Models\Option;
 use App\Models\OptionGroup;
 use App\Models\Product;
 use Illuminate\Database\Seeder;
+use Illuminate\Support\Facades\Storage;
 
 /**
  * Ported from legacy/admin.js INITIAL_SEED. Prices are TL there; stored here as kuruş (×100).
@@ -24,24 +25,24 @@ class MenuSeeder extends Seeder
 
     // [slug, category, name, price TL, description, image, bestseller, new]
     private const PRODUCTS = [
-        ['tea_1', 'tea', 'Earl Grey Royal', 95, 'Bergamot harmanlı siyah çay, kurutulmuş peygamber çiçeği ve portakal kabuğu ile demlenmiş kraliyet serisi.', 'assets/earl_grey.png', true, false],
-        ['tea_2', 'tea', 'Japon Sencha Yeşil Çay', 90, 'Birinci hasat Japon yeşil çay yaprakları; ferahlatıcı ve zengin antioksidan deposu.', 'assets/earl_grey.png', false, false],
-        ['tea_3', 'tea', 'Papatya & Fransız Lavantası', 85, 'Dinlendirici organik papatya tomurcukları ve rahatlatıcı Provence lavantası.', 'assets/earl_grey.png', false, false],
-        ['tea_4', 'tea', 'Chai Tea Latte', 115, 'Geleneksel Hint baharatları, demlenmiş aromatik siyah çay ve ipeksi süt köpüğü.', 'assets/earl_grey.png', true, false],
-        ['tea_5', 'tea', 'Buzlu Şeftali & Hibiskus', 105, 'Ev yapımı organik şeftali püresi, soğuk demlenmiş ekşi hibiskus çayı ve taze nane.', 'assets/earl_grey.png', false, true],
-        ['coff_1', 'coffee', 'Kütüphane Özel Latte', 120, 'Çift shot nitelikli Kolombiya espresso, yulaf sütlü kadifemsi doku ve hafif karamel lezzeti.', 'assets/latte.png', true, false],
-        ['coff_2', 'coffee', 'Double Ristretto Espresso', 75, '%100 Arabica nitelikli harman, kısa ve yoğun aroma.', 'assets/latte.png', false, false],
-        ['coff_3', 'coffee', 'Velvet Cappuccino', 110, 'Dengeli espresso bazı ve ipeksi kıvamda yoğun mikro süt köpüğü.', 'assets/latte.png', false, false],
-        ['coff_4', 'coffee', 'Cold Brew Reserve', 125, 'Etiyopya Yirgacheffe çekirdeklerinden 18 saat soğuk demlenmiş yumuşak içimli nitelikli kahve.', 'assets/latte.png', true, false],
-        ['bakery_1', 'bakery', 'Avokadolu Ekşi Maya Toast', 165, 'Kendi fırınımızdan çıkan kızarmış ekşi maya ekmek, sızma zeytinyağlı avokado pürüzü ve poşe yumurta.', 'assets/avocado_toast.png', true, false],
-        ['bakery_2', 'bakery', 'Tereyağlı Fransız Kruvasanı', 85, 'Fransız tereyağı ile hazırlanan, kat kat çıtır ve yumuşak taze fırınlanmış kruvasan.', 'assets/avocado_toast.png', false, false],
-        ['dessert_1', 'dessert', 'San Sebastian Cheesecake', 155, 'İspanyol usulü fırınlanmış yanık üzeri ve kremsi akışkan içi ile; yanında karadut kompostosu.', 'assets/cheesecake.png', true, false],
-        ['dessert_2', 'dessert', 'Sıcak Çikolatalı Brownie', 135, '%70 Belçika çikolatası ve kıyılmış ceviz içi ile hazırlanan sıcak servis dilim.', 'assets/cheesecake.png', false, false],
-        ['dessert_3', 'dessert', 'Geleneksel Tiramisu', 160, 'Mascarpone peynirli hafif krema ve espressolu kedi dili bisküvileri katmanları.', 'assets/cheesecake.png', false, true],
-        ['sand_1', 'sandwich', 'Gurme Peynir & Şarküteri Tabağı', 195, 'Üç çeşit olgunlaştırılmış peynir, ceviz içi, kuru incir, kovan balı ve çıtır kıtır ekmekler.', 'assets/avocado_toast.png', false, false],
-        ['sand_2', 'sandwich', 'Fesleğenli Mozzarella Panini', 160, 'Sıcak ciabatta ekmeğinde erimiş taze mozzarella, domates ve ev yapımı fesleğen pesto sosu.', 'assets/avocado_toast.png', false, false],
-        ['book_1', 'books', 'Book & Tea Seramik Fincan', 250, 'Özel tasarım el yapımı toprak mat seramik fincan. Logolu özel kutusunda.', 'assets/hero.png', false, false],
-        ['book_2', 'books', 'Deri Kitap Ayracı & Not Defteri', 180, 'Hakiki deri kitap ayracı ve noktalı kütüphane not defteri seti.', 'assets/hero.png', false, false],
+        ['tea_1', 'tea', 'Earl Grey Royal', 95, 'Bergamot harmanlı siyah çay, kurutulmuş peygamber çiçeği ve portakal kabuğu ile demlenmiş kraliyet serisi.', 'products/earl_grey.png', true, false],
+        ['tea_2', 'tea', 'Japon Sencha Yeşil Çay', 90, 'Birinci hasat Japon yeşil çay yaprakları; ferahlatıcı ve zengin antioksidan deposu.', 'products/earl_grey.png', false, false],
+        ['tea_3', 'tea', 'Papatya & Fransız Lavantası', 85, 'Dinlendirici organik papatya tomurcukları ve rahatlatıcı Provence lavantası.', 'products/earl_grey.png', false, false],
+        ['tea_4', 'tea', 'Chai Tea Latte', 115, 'Geleneksel Hint baharatları, demlenmiş aromatik siyah çay ve ipeksi süt köpüğü.', 'products/earl_grey.png', true, false],
+        ['tea_5', 'tea', 'Buzlu Şeftali & Hibiskus', 105, 'Ev yapımı organik şeftali püresi, soğuk demlenmiş ekşi hibiskus çayı ve taze nane.', 'products/earl_grey.png', false, true],
+        ['coff_1', 'coffee', 'Kütüphane Özel Latte', 120, 'Çift shot nitelikli Kolombiya espresso, yulaf sütlü kadifemsi doku ve hafif karamel lezzeti.', 'products/latte.png', true, false],
+        ['coff_2', 'coffee', 'Double Ristretto Espresso', 75, '%100 Arabica nitelikli harman, kısa ve yoğun aroma.', 'products/latte.png', false, false],
+        ['coff_3', 'coffee', 'Velvet Cappuccino', 110, 'Dengeli espresso bazı ve ipeksi kıvamda yoğun mikro süt köpüğü.', 'products/latte.png', false, false],
+        ['coff_4', 'coffee', 'Cold Brew Reserve', 125, 'Etiyopya Yirgacheffe çekirdeklerinden 18 saat soğuk demlenmiş yumuşak içimli nitelikli kahve.', 'products/latte.png', true, false],
+        ['bakery_1', 'bakery', 'Avokadolu Ekşi Maya Toast', 165, 'Kendi fırınımızdan çıkan kızarmış ekşi maya ekmek, sızma zeytinyağlı avokado pürüzü ve poşe yumurta.', 'products/avocado_toast.png', true, false],
+        ['bakery_2', 'bakery', 'Tereyağlı Fransız Kruvasanı', 85, 'Fransız tereyağı ile hazırlanan, kat kat çıtır ve yumuşak taze fırınlanmış kruvasan.', 'products/avocado_toast.png', false, false],
+        ['dessert_1', 'dessert', 'San Sebastian Cheesecake', 155, 'İspanyol usulü fırınlanmış yanık üzeri ve kremsi akışkan içi ile; yanında karadut kompostosu.', 'products/cheesecake.png', true, false],
+        ['dessert_2', 'dessert', 'Sıcak Çikolatalı Brownie', 135, '%70 Belçika çikolatası ve kıyılmış ceviz içi ile hazırlanan sıcak servis dilim.', 'products/cheesecake.png', false, false],
+        ['dessert_3', 'dessert', 'Geleneksel Tiramisu', 160, 'Mascarpone peynirli hafif krema ve espressolu kedi dili bisküvileri katmanları.', 'products/cheesecake.png', false, true],
+        ['sand_1', 'sandwich', 'Gurme Peynir & Şarküteri Tabağı', 195, 'Üç çeşit olgunlaştırılmış peynir, ceviz içi, kuru incir, kovan balı ve çıtır kıtır ekmekler.', 'products/avocado_toast.png', false, false],
+        ['sand_2', 'sandwich', 'Fesleğenli Mozzarella Panini', 160, 'Sıcak ciabatta ekmeğinde erimiş taze mozzarella, domates ve ev yapımı fesleğen pesto sosu.', 'products/avocado_toast.png', false, false],
+        ['book_1', 'books', 'Book & Tea Seramik Fincan', 250, 'Özel tasarım el yapımı toprak mat seramik fincan. Logolu özel kutusunda.', 'products/hero.png', false, false],
+        ['book_2', 'books', 'Deri Kitap Ayracı & Not Defteri', 180, 'Hakiki deri kitap ayracı ve noktalı kütüphane not defteri seti.', 'products/hero.png', false, false],
     ];
 
     private const OPTION_GROUPS = [
@@ -75,6 +76,8 @@ class MenuSeeder extends Seeder
 
     public function run(): void
     {
+        $this->copySeedImages();
+
         $categories = [];
         foreach (self::CATEGORIES as $data) {
             $categories[$data['slug']] = Category::updateOrCreate(
@@ -118,6 +121,19 @@ class MenuSeeder extends Seeder
             $product->optionGroups()->sync(
                 array_map(fn (string $key) => $groups[$key]->id, $groupKeys)
             );
+        }
+    }
+
+    /** Seed images ship in database/seeders/images and are served like admin uploads. */
+    private function copySeedImages(): void
+    {
+        $disk = Storage::disk('public');
+
+        foreach (glob(__DIR__.'/images/*') ?: [] as $file) {
+            $target = Product::IMAGE_DIRECTORY.'/'.basename($file);
+            if (! $disk->exists($target)) {
+                $disk->put($target, file_get_contents($file));
+            }
         }
     }
 }

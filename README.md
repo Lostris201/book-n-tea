@@ -23,9 +23,22 @@ cd backend
 composer install
 cp .env.example .env        # then fill in DB_* etc. For local dev set APP_ENV=local, APP_DEBUG=true
 php artisan key:generate
-php artisan migrate
+php artisan migrate --seed
+php artisan storage:link    # serves uploaded product images from /storage
 php artisan serve           # http://localhost:8000
 ```
+
+Admin panel (Filament): http://localhost:8000/admin
+
+| Role | Panel access |
+|---|---|
+| admin | everything: menu, tables, orders, reservations, users, settings, audit log |
+| manager | menu (products, categories, option groups), tables + QR printing, orders, reservations |
+| staff | no panel access; uses the staff order board |
+
+Every change to menu items, tables, order status, reservations, settings, users and integrations is recorded in
+the audit log (`/admin/activities`) with the user who made it. QR tokens, passwords, integration credentials and
+customer phone numbers are never written to it. Set `QR_MENU_URL` (customer menu base URL) before printing QR codes.
 
 Tests: `php artisan test`
 

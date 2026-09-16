@@ -6,9 +6,13 @@ use Illuminate\Database\Eloquent\Builder;
 use Illuminate\Database\Eloquent\Model;
 use Illuminate\Database\Eloquent\Relations\HasMany;
 use Illuminate\Support\Str;
+use Spatie\Activitylog\LogOptions;
+use Spatie\Activitylog\Traits\LogsActivity;
 
 class CafeTable extends Model
 {
+    use LogsActivity;
+
     protected $fillable = ['number', 'name', 'is_active'];
 
     protected $hidden = ['qr_token'];
@@ -28,15 +32,28 @@ class CafeTable extends Model
         });
     }
 
+    public function getActivitylogOptions(): LogOptions
+    {
+        // The QR token is a secret: log that it changed, never its value.
+        return LogOptions::defaults()->logOnly(['number', 'name', 'is_active'])->logOnlyDirty()->dontSubmitEmptyLogs();
+    }
+
     public static function generateToken(): string
     {
         return Str::random(32);
     }
 
+    /** Invalidates the printed QR code for this table. */
     public function regenerateToken(): void
     {
         $this->qr_token = static::generateToken();
         $this->save();
+
+        activity()
+            ->performedOn($this)
+            ->event('updated')
+            ->withProperties(['qr_token_regenerated' => true])
+            ->log('QR token regenerated');
     }
 
     public function orders(): HasMany

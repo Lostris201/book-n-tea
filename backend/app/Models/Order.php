@@ -9,9 +9,13 @@ use Illuminate\Database\Eloquent\Relations\BelongsTo;
 use Illuminate\Database\Eloquent\Relations\HasMany;
 use Illuminate\Support\Facades\DB;
 use Illuminate\Support\Str;
+use Spatie\Activitylog\LogOptions;
+use Spatie\Activitylog\Traits\LogsActivity;
 
 class Order extends Model
 {
+    use LogsActivity;
+
     protected $fillable = ['cafe_table_id', 'status', 'note', 'has_new_items', 'total_cents', 'closed_at'];
 
     protected $attributes = [
@@ -36,6 +40,12 @@ class Order extends Model
         static::creating(function (Order $order) {
             $order->public_id ??= 'ord_'.Str::lower((string) Str::ulid());
         });
+    }
+
+    public function getActivitylogOptions(): LogOptions
+    {
+        // Status changes only; items/notes are customer content and already stored on the order.
+        return LogOptions::defaults()->logOnly(['status'])->logOnlyDirty()->dontSubmitEmptyLogs();
     }
 
     public function getRouteKeyName(): string

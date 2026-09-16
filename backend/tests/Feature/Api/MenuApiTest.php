@@ -9,6 +9,7 @@ use App\Models\Product;
 use App\Models\Setting;
 use App\Models\User;
 use Illuminate\Foundation\Testing\RefreshDatabase;
+use Illuminate\Support\Facades\Storage;
 use Laravel\Sanctum\Sanctum;
 use Tests\TestCase;
 
@@ -41,7 +42,7 @@ class MenuApiTest extends TestCase
             'category' => 'tea',
             'price' => 95,
             'desc' => 'Bergamot harmanlı siyah çay, kurutulmuş peygamber çiçeği ve portakal kabuğu ile demlenmiş kraliyet serisi.',
-            'image' => 'assets/earl_grey.png',
+            'image' => Storage::disk('public')->url('products/earl_grey.png'),
             'active' => true,
             'bestseller' => true,
             'isNew' => false,

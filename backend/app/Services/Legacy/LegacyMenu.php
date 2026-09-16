@@ -69,7 +69,7 @@ class LegacyMenu
                 'category' => $p->category->slug,
                 'price' => Money::toTl($p->price_cents),
                 'desc' => $p->description ?? '',
-                'image' => $p->image_path,
+                'image' => $p->imageUrl(),
                 'active' => true,
                 'bestseller' => $p->is_bestseller,
                 'isNew' => $p->is_new,
