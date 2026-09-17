@@ -97,7 +97,25 @@ cd frontend
 npm install
 cp .env.example .env.local  # NEXT_PUBLIC_API_URL = Laravel base URL
 npm run dev                 # http://localhost:3000
+npm run build               # static export → frontend/out/
 ```
+
+| Route | What |
+|---|---|
+| `/?t={qr_token}` | Customer menu. Without a valid token it asks the guest to scan the table QR (browse-only mode available). |
+| `/staff/` | Staff login (Sanctum session cookie) → live order board: 2 s polling, sound + flash on new orders, added items and waiter calls. |
+
+The design is the legacy menu/staff CSS ported as-is (`app/(menu)/menu.css`, `app/(staff)/staff/staff.css`); each
+area has its own root layout so the two stylesheets never mix. The menu is always fetched at runtime, so admin
+changes appear without a rebuild. Carts live in `sessionStorage` per table.
+
+Production (static export on the VPS):
+
+- Serve `frontend/out/` with Nginx (`try_files $uri $uri/ =404;` — `trailingSlash` is on, so `/staff/` is a folder).
+- `NEXT_PUBLIC_API_URL` is baked in at build time; rebuild after changing it.
+- Backend `.env`: `SANCTUM_STATEFUL_DOMAINS` = the frontend host, `CORS_ALLOWED_ORIGINS` = the frontend origin,
+  `SESSION_DOMAIN` = a parent domain shared by frontend and API (e.g. `.example.com`), `SESSION_SECURE_COOKIE=true`.
+- `QR_MENU_URL` = the frontend URL (e.g. `https://menu.example.com/`).
 
 ## Legacy site
 

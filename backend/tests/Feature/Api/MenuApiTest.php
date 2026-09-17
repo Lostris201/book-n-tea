@@ -53,6 +53,11 @@ class MenuApiTest extends TestCase
         $response->assertJsonPath('productOptionMappings.tea_1', ['milk' => true, 'sugar' => true, 'extras' => false]);
         $response->assertJsonPath('productOptionMappings.coff_1', ['milk' => true, 'sugar' => true, 'extras' => true]);
         $response->assertJsonMissingPath('productOptionMappings.tea_2');
+        $response->assertJsonPath('optionGroups', [
+            ['key' => 'milk', 'name' => 'Süt Tercihi', 'multiSelect' => false],
+            ['key' => 'sugar', 'name' => 'Şeker Derecesi', 'multiSelect' => false],
+            ['key' => 'extras', 'name' => 'Ekstralar', 'multiSelect' => true],
+        ]);
         $response->assertJsonPath('settings.cafeName', 'Book N Tea');
         $response->assertJsonPath('settings.callWaiter', true);
     }

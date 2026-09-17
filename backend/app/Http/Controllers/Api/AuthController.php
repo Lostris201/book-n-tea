@@ -6,12 +6,15 @@ use App\Http\Controllers\Controller;
 use App\Models\User;
 use Illuminate\Http\JsonResponse;
 use Illuminate\Http\Request;
+use Illuminate\Support\Facades\Auth;
 use Illuminate\Support\Facades\Hash;
 use Illuminate\Support\Facades\Log;
+use Laravel\Sanctum\PersonalAccessToken;
 
 /**
- * Token auth for staff/admin API clients (legacy staff board). The Next.js app will use
- * Sanctum SPA cookie auth in Phase 6.
+ * Two login modes:
+ * - Stateful (Next.js on a SANCTUM_STATEFUL_DOMAINS origin): session cookie, CSRF-protected, no token returned.
+ * - Stateless (legacy pages, other API clients): bearer token.
  */
 class AuthController extends Controller
 {
@@ -41,6 +44,13 @@ class AuthController extends Controller
             return response()->json(['error' => 'Hesabınız devre dışı.'], 403);
         }
 
+        if ($request->hasSession()) {
+            Auth::guard('web')->login($user);
+            $request->session()->regenerate();
+
+            return response()->json(['user' => $this->userPayload($user)]);
+        }
+
         $token = $user->createToken('api', [$user->role->value])->plainTextToken;
 
         return response()->json([
@@ -51,12 +61,28 @@ class AuthController extends Controller
 
     public function me(Request $request): JsonResponse
     {
-        return response()->json(['user' => $this->userPayload($request->user())]);
+        $user = $request->user();
+
+        if (! $user->is_active) {
+            return response()->json(['error' => 'Hesabınız devre dışı.'], 403);
+        }
+
+        return response()->json(['user' => $this->userPayload($user)]);
     }
 
     public function logout(Request $request): JsonResponse
     {
-        $request->user()->currentAccessToken()?->delete();
+        $token = $request->user()->currentAccessToken();
+
+        if ($token instanceof PersonalAccessToken) {
+            $token->delete();
+        }
+
+        if ($request->hasSession()) {
+            Auth::guard('web')->logout();
+            $request->session()->invalidate();
+            $request->session()->regenerateToken();
+        }
 
         return response()->json(['success' => true]);
     }

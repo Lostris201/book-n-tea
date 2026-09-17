@@ -89,6 +89,12 @@ class LegacyMenu
                 ])->values()->all(),
             ])->all(),
             'productOptionMappings' => (object) $mappings,
+            // Additive (legacy clients ignore it): group titles and single/multi choice for the Next.js menu.
+            'optionGroups' => $groups->map(fn (OptionGroup $g) => [
+                'key' => $g->key,
+                'name' => $g->name,
+                'multiSelect' => $g->is_multi_select,
+            ])->values()->all(),
             'settings' => $settings,
         ];
     }

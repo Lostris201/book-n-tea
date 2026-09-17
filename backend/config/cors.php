@@ -30,6 +30,7 @@ return [
 
     'max_age' => 0,
 
-    'supports_credentials' => false,
+    // Required for the Next.js session cookie; origins are an explicit list, never *.
+    'supports_credentials' => true,
 
 ];

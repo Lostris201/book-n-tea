@@ -26,6 +26,41 @@ class AuthApiTest extends TestCase
         $this->withToken($token)->getJson('/api/auth/me')->assertJsonPath('user.email', 'garson@example.test');
     }
 
+    public function test_spa_origin_logs_in_with_session_cookie_instead_of_token(): void
+    {
+        config(['sanctum.stateful' => ['localhost:3000']]);
+        User::factory()->role(UserRole::Staff)->create(['email' => 'garson@example.test']);
+        $spa = ['Origin' => 'http://localhost:3000', 'Referer' => 'http://localhost:3000/staff/'];
+
+        $response = $this->withHeaders($spa)
+            ->postJson('/api/auth/login', ['email' => 'garson@example.test', 'password' => 'password'])
+            ->assertOk()
+            ->assertJsonPath('user.role', 'staff')
+            ->assertJsonMissingPath('token');
+
+        $this->assertAuthenticatedAs(User::where('email', 'garson@example.test')->first(), 'web');
+
+        // The session authorizes staff endpoints for the SPA.
+        $this->withHeaders($spa)->getJson('/api/orders')->assertOk();
+        $this->withHeaders($spa)->getJson('/api/auth/me')->assertJsonPath('user.email', 'garson@example.test');
+
+        $this->withHeaders($spa)->postJson('/api/auth/logout')->assertOk();
+        $this->assertGuest('web');
+    }
+
+    public function test_spa_session_of_deactivated_user_is_rejected(): void
+    {
+        config(['sanctum.stateful' => ['localhost:3000']]);
+        $user = User::factory()->role(UserRole::Staff)->create();
+        $spa = ['Origin' => 'http://localhost:3000', 'Referer' => 'http://localhost:3000/staff/'];
+
+        $this->actingAs($user, 'web');
+        $user->update(['is_active' => false]);
+
+        $this->withHeaders($spa)->getJson('/api/orders')->assertForbidden();
+        $this->withHeaders($spa)->getJson('/api/auth/me')->assertForbidden();
+    }
+
     public function test_logout_revokes_token(): void
     {
         User::factory()->create(['email' => 'garson@example.test']);

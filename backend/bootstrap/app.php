@@ -27,6 +27,9 @@ return Application::configure(basePath: dirname(__DIR__))
     ->withMiddleware(function (Middleware $middleware): void {
         $middleware->api(prepend: [ForceJsonResponse::class]);
 
+        // Next.js (SANCTUM_STATEFUL_DOMAINS) uses session cookies + CSRF; other clients use bearer tokens.
+        $middleware->statefulApi();
+
         $middleware->alias([
             'role' => EnsureUserHasRole::class,
         ]);
