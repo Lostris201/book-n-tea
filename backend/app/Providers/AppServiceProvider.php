@@ -64,6 +64,10 @@ class AppServiceProvider extends ServiceProvider
             ->by('ip:'.$request->ip())
             ->response($tooMany('table-resolve')));
 
+        RateLimiter::for('webhooks', fn (Request $request) => Limit::perMinute(120)
+            ->by('ip:'.$request->ip())
+            ->response($tooMany('webhooks')));
+
         RateLimiter::for('login', fn (Request $request) => Limit::perMinute(5)
             ->by('ip:'.$request->ip())
             ->response($tooMany('login')));

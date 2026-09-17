@@ -35,6 +35,17 @@ return [
         ],
     ],
 
+    // External reservation system ("köprü"). Secrets only via .env — never shown in the panel.
+    'reservation' => [
+        'provider' => env('RESERVATION_PROVIDER'), // empty = integration disabled (NullProvider); "fake" for demo/tests
+        'base_url' => env('RESERVATION_API_BASE_URL'),
+        'key' => env('RESERVATION_API_KEY'),
+        'secret' => env('RESERVATION_API_SECRET'),
+        'webhook_secret' => env('RESERVATION_WEBHOOK_SECRET'),
+        'timeout' => (int) env('RESERVATION_API_TIMEOUT', 10),
+        'sync_days' => (int) env('RESERVATION_SYNC_DAYS', 30),
+    ],
+
     'frontend' => [
         'url' => env('FRONTEND_URL'),
         // Base of the customer menu link printed in table QR codes (the token is appended as ?t=).

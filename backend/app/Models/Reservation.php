@@ -4,12 +4,15 @@ namespace App\Models;
 
 use App\Enums\ReservationSource;
 use App\Enums\ReservationStatus;
+use App\Observers\ReservationObserver;
+use Illuminate\Database\Eloquent\Attributes\ObservedBy;
 use Illuminate\Database\Eloquent\Builder;
 use Illuminate\Database\Eloquent\Model;
 use Illuminate\Database\Eloquent\Relations\BelongsTo;
 use Spatie\Activitylog\LogOptions;
 use Spatie\Activitylog\Traits\LogsActivity;
 
+#[ObservedBy(ReservationObserver::class)]
 class Reservation extends Model
 {
     use LogsActivity;

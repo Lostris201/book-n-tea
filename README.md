@@ -67,6 +67,29 @@ Local dev logins (seeded only when `APP_ENV=local`): `admin@bookntea.test`, `man
 - Errors are always `{ "error": "Türkçe mesaj" }`. Cross-origin browser access is limited to `CORS_ALLOWED_ORIGINS`.
 - Failed logins, rate-limit hits and invalid table tokens go to `storage/logs/security-*.log` (kept 90 days).
 
+### Reservation integration ("köprü")
+
+No real provider is connected yet — which system the café uses is still an open question (see
+`BACKEND_PLAN.md` §9). The scaffold is in place so a real integration is one adapter class:
+
+- `app/Integrations/Reservations/ReservationProvider.php` — the contract; register adapters in
+  `ReservationProviderManager::PROVIDERS`. Adapters must make HTTP calls through `IntegrationHttp::make()`
+  (10 s timeout, retries, redacted logging to `storage/logs/integrations-*.log`).
+- `NullProvider` (disabled) and `FakeProvider` (tests/demo; its webhook format is our own, not a real API).
+- Inbound: `POST /api/webhooks/reservations/{provider}` — signature verified with `RESERVATION_WEBHOOK_SECRET`
+  (failures → 401 + security log), processed in a queued job, idempotent on `(external_provider, external_id)`.
+- Polling: `php artisan reservations:sync` runs every 5 minutes via the scheduler.
+- Outbound: reservations created/changed in the panel are pushed by a queued job (5 tries, backoff).
+- Conflicts: the provider wins for external reservations; we win for native ones.
+- Admin page `/admin/integrations`: enable/disable, test connection, sync now, last sync / last error.
+  Secrets are only shown as "Ayarlı" / "Ayarlı değil".
+
+Try it locally: set `RESERVATION_PROVIDER=fake` and `RESERVATION_WEBHOOK_SECRET=...`, enable it on the
+Integrations page, then click "Şimdi senkronize et" to import three demo reservations.
+
+Production needs a queue worker (`php artisan queue:work`) and the scheduler cron
+(`* * * * * php artisan schedule:run`).
+
 ## Frontend (Next.js)
 
 ```bash

@@ -3,6 +3,7 @@
 use App\Http\Controllers\Api\AuthController;
 use App\Http\Controllers\Api\MenuController;
 use App\Http\Controllers\Api\OrderController;
+use App\Http\Controllers\Api\ReservationWebhookController;
 use App\Http\Controllers\Api\TableController;
 use App\Http\Controllers\Api\WaiterCallController;
 use Illuminate\Support\Facades\Route;
@@ -26,6 +27,11 @@ Route::get('/tables', [TableController::class, 'index'])->middleware(['auth:sanc
 // Customer actions — scoped by the table's QR token, rate limited per IP and per table
 Route::post('/orders', [OrderController::class, 'store'])->middleware('throttle:orders');
 Route::post('/waiter-calls', [WaiterCallController::class, 'store'])->middleware('throttle:waiter-calls');
+
+// Inbound webhooks from the external reservation system (signature-verified, not user-authenticated)
+Route::post('/webhooks/reservations/{provider}', ReservationWebhookController::class)
+    ->middleware('throttle:webhooks')
+    ->where('provider', '[a-z0-9_-]+');
 
 // Staff board
 Route::middleware(['auth:sanctum', 'role:admin,manager,staff'])->group(function () {

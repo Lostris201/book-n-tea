@@ -73,6 +73,15 @@ return [
             'replace_placeholders' => true,
         ],
 
+        // Outbound/inbound integration traffic — always redacted (see App\Support\LogRedactor).
+        'integrations' => [
+            'driver' => 'daily',
+            'path' => storage_path('logs/integrations.log'),
+            'level' => env('LOG_LEVEL', 'info'),
+            'days' => 14,
+            'replace_placeholders' => true,
+        ],
+
         // Failed logins, rate-limit hits, invalid table tokens, webhook signature failures.
         'security' => [
             'driver' => 'daily',
